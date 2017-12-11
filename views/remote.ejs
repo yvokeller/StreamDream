@@ -5,29 +5,32 @@
     <div class='container'>
       <h1>Remote</h1>
 
-      <button id="btnPlay" class="btn btn-lg btn-default" type="button">
-        <img src="assets/img/play.png" width="50px" class="img-responsive" />
+      <button id="btnPlay" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">play_arrow</i>
       </button>
 
-      <button id="btnPause" class="btn btn-lg btn-default" type="button">
-        <img src="assets/img/pause.png" width="50px" class="img-responsive" />
+      <button id="btnPause" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">pause</i>
       </button>
 
       <br>
       <br>
 
-      <button id="btn10Backward" class="btn btn-lg btn-default" type="button">
-        <img src="assets/img/backward.png" width="50px" class="img-responsive" />
+      <button id="btn10Backward" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">replay_10</i>
       </button>
 
-      <button id="btn10Forward" class="btn btn-lg btn-default" type="button">
-         <img src="assets/img/forward.png" width="50px" class="img-responsive" />
+      <button id="btn10Forward" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">forward_10</i>
       </button>
 
       <h3>Connected Devices</h3>
       <%- conn %>
 
     </div>
+
+    <% include partials/scripts.ejs %>
+
     <script>
       console.log('IN');
 

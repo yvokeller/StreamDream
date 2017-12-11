@@ -220,7 +220,7 @@ app.get('/library', isLoggedIn, function(req, res){
   db.executeRead(sql_query, function(val){
       //Get Series
       if (val !== 'undefined' && val !== null){
-        var content = '<table class="">';
+        /*var content = '<table class="">';
         content += '<tr><th></th></tr>';
 
         console.log(val.length);
@@ -239,6 +239,20 @@ app.get('/library', isLoggedIn, function(req, res){
         }
 
         content += '</table>';
+        */
+
+        var content = ''
+
+        for(var i = 0; i < val.length; i++) {
+          content += '<div class="col s12 m6"> <div class="card"> <div class="card-image">'
+          content += '<img src="data/thumbnails/' + val[i].thumbnail + '">'
+          content += '<span class="card-title">' + val[i].name + '</span>'
+          content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].id).toString() + '">'
+          content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+          content += '<p>' + val[i].description + '</p>'
+          content += '</div> </div> </div> </div>'
+        }
+
         var series = content;
 
         //Get RECENT
