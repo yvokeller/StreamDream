@@ -1,23 +1,23 @@
 <html>
 <% include partials/head.ejs %>
-<body>
+
+  <body>
     <% include partials/navigation.ejs %>
-    <div class='container'>
-      <h1>Library.</h1>
+      <div class='container'>
+        <h1>Library.</h1>
 
-      <% if(recent && recent !== 'undefined' && recent !== null){ %>
-      <h2>Recently Watched</h2>
-      <%- recent %>
-      <% } %>
+          <% if(recent && recent !== 'undefined' && recent !== null){ %>
+          <h2>Recently Watched</h2>
+          <%- recent %>
+          <% } %>
 
-      <br>
-      <%- series %>
-      <br>
-    </div>
+          <br>
+          <%- series %>
+          <br>
 
-    <% include partials/scripts.ejs %>
+      </div>
 
-    <script>
-    </script>
+      <% include partials/scripts.ejs %>
+
   </body>
 </html>

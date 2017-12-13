@@ -133,7 +133,7 @@ app.post('/register', urlencodedParser, function(req, res){
     var sql_query = 'INSERT INTO tbl_user(username, password) VALUES("' + username + '","' + hash + '")';
     db.executeRead(sql_query, function(val){
       msg += 'Successfully registered! You can now log in.';
-      var feedback = '<p class="label label-success error">' + msg + '<p>';
+      var feedback = '<div class="card-panel indigo lighten-5 center">' + msg + '</div>';
 
       if(msg = ''){
         feedback = '';
@@ -174,7 +174,7 @@ app.post('/login', urlencodedParser, function(req, res){
       if(val.length === 0){
         //No Result
         console.log('Account doenst exist.');
-        res.render('login', {errors: '<p class="label label-danger error">This account doesnt exist!</p>'});
+        res.render('login', {errors: '<div class="card-panel indigo lighten-5 center">This account doesnt exist!</div>'});
       } else {
         //Account found
         var hash = val[0].password;
@@ -193,13 +193,13 @@ app.post('/login', urlencodedParser, function(req, res){
           console.log('User signed in.' + sess.authenticated);
           res.redirect('/');
         } else {
-          res.render('login', {errors: '<p class="label label-danger error">Wrong password!</p>'});
+          res.render('login', {errors: '<div class="card-panel indigo lighten-5 center">Wrong password!</div>'});
         }
       }
     });
   } else {
     //Not all Parameters Given / False
-    res.render('login', {errors: '<p class="label label-danger error">Invalid login credentials!</p>'});
+    res.render('login', {errors: '<div class="card-panel indigo lighten-5 center">Invalid login credentials!</div>'});
   }
 });
 
@@ -220,27 +220,7 @@ app.get('/library', isLoggedIn, function(req, res){
   db.executeRead(sql_query, function(val){
       //Get Series
       if (val !== 'undefined' && val !== null){
-        /*var content = '<table class="">';
-        content += '<tr><th></th></tr>';
-
-        console.log(val.length);
-
-        for(var i = 0; i < val.length; i++) {
-          content += '<tr><td>';
-
-          content += '<h2>' + val[i].name + '</h2>';
-          content += '<h4>' + val[i].description + '</h4>';
-
-          content += '<a href="/library/' + val[i].id + '">'
-          content += '<img src="data/thumbnails/' + val[i].thumbnail + '" width="auto" class="img-responsive">';
-          content += '</a>'
-
-          content += '</td></tr>';
-        }
-
-        content += '</table>';
-        */
-
+        //Generate List with available series
         var content = ''
 
         for(var i = 0; i < val.length; i++) {
@@ -309,7 +289,7 @@ app.get('/library/:id', isLoggedIn, function(req, res){
 
     db.executeRead(sql_query, function(val){
       if(val !== 'undefined' && val !== null){
-        var content = '<div class="table-responsive"><table>';
+        /*var content = '<div class="table-responsive"><table>';
         content += '<tr><th></th></tr>';
 
         console.log(val.length);
@@ -330,7 +310,22 @@ app.get('/library/:id', isLoggedIn, function(req, res){
         }
 
         content += '</table></div>';
+        var series = content;*/
+
+        var content = ''
+
+        for(var i = 0; i < val.length; i++) {
+          content += '<div class="col s12 m6"> <div class="card"> <div class="card-image">'
+          content += '<img src="../data/thumbnails/' + val[i].thumbnail + '">'
+          content += '<span class="card-title">' + val[i].name + '</span>'
+          content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + val[i].fk_series + '/' + val[i].id + '">'
+          content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+          content += '<p>' + val[i].production_year + ' - ' + val[i].description + '</p>'
+          content += '</div> </div> </div> </div>'
+        }
+
         var series = content;
+
         res.render('library', {
           series: series,
           recent: undefined
