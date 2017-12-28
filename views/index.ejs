@@ -40,7 +40,7 @@
               <div class="col s12">
 
                 <div class="input-field col s12">
-                  <input placeholder="" id="message" name="message" type="text" class="validate" required>
+                  <input placeholder="" id="message" name="message" type="text" class="" required>
                   <label for="message">Message</label>
                 </div>
 
@@ -67,74 +67,74 @@
           <h4>Recommended</h4>
 
 
-        <div class="row">
-          <div class="col s12 m6">
-            <div class="card">
-              <div class="card-image">
-                <img src="data/thumbnails/episode/twd_s4_e3.png">
-                <span class="card-title">Card Title</span>
-                <a onclick="showToast()" class="btn-floating halfway-fab waves-effect waves-light red"><i class="material-icons">play_arrow</i></a>
-              </div>
-              <div class="card-content">
-                <p>I am a very simple card. I am good at containing small bits of information. I am convenient because I require little markup to use effectively.</p>
+          <div class="row">
+            <div class="col s12 m6">
+              <div class="card">
+                <div class="card-image">
+                  <img src="data/thumbnails/episode/twd_s4_e3.png">
+                  <span class="card-title">Card Title</span>
+                  <a onclick="showToast()" class="btn-floating halfway-fab waves-effect waves-light red"><i class="material-icons">play_arrow</i></a>
+                </div>
+                <div class="card-content">
+                  <p>I am a very simple card. I am good at containing small bits of information. I am convenient because I require little markup to use effectively.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
+        <% include partials/footer.ejs %>
 
-      </div>
+        <% include partials/scripts.ejs %>
 
-      <% include partials/scripts.ejs %>
+          <script>
+            function showToast() {
+              Materialize.toast('I am a toast!', 4000) // 4000 is the duration of the toast
+            }
 
-        <script>
-          function showToast(){
-            Materialize.toast('I am a toast!', 4000) // 4000 is the duration of the toast
-          }
+            $(function() {
+              var socket = io.connect();
+              var $messageForm = $('#messageForm');
+              var $message = $('#message');
 
-          $(function() {
-            var socket = io.connect();
-            var $messageForm = $('#messageForm');
-            var $message = $('#message');
+              var $chat = $('#chat');
 
-            var $chat = $('#chat');
+              var $streamButton = $('#strm');
 
-            var $streamButton = $('#strm');
+              /*//Join the Account Room
+              socket.emit('join room', {username: '<%= session.username %>'});
 
-            /*//Join the Account Room
-            socket.emit('join room', {username: '<%= session.username %>'});
+              socket.on('joined room', function(data){
+                console.log('Users in Room: ' + data.members);
+              });*/
 
-            socket.on('joined room', function(data){
-              console.log('Users in Room: ' + data.members);
-            });*/
-
-            $messageForm.submit(function(e) {
-              e.preventDefault();
-              var msg = $message.val();
-              if (msg !== '') {
-                socket.emit('send message', {
-                  username: '<%= session.username %>',
-                  msg: msg
-                });
-                $message.val('');
-              }
-            });
-
-            socket.on('new message', function(data) {
-              $chat.append('<div class="card-panel red lighten-5"><b>' + data.username + '</b>: ' + data.msg + '</div>');
-            });
-
-            /*function submitMessage(e){
-              if (e.keyCode == 13) {
+              $messageForm.submit(function(e) {
                 e.preventDefault();
                 var msg = $message.val();
-                socket.emit('send message', {username: '<%= session.username %>', msg: msg});
-                $message.val('');
-              }
-            }*/
+                if (msg !== '') {
+                  socket.emit('send message', {
+                    username: '<%= session.username %>',
+                    msg: msg
+                  });
+                  $message.val('');
+                }
+              });
 
-          });
-        </script>
+              socket.on('new message', function(data) {
+                $chat.append('<div class="card-panel red lighten-5"><b>' + data.username + '</b>: ' + data.msg + '</div>');
+              });
+
+              /*function submitMessage(e){
+                if (e.keyCode == 13) {
+                  e.preventDefault();
+                  var msg = $message.val();
+                  socket.emit('send message', {username: '<%= session.username %>', msg: msg});
+                  $message.val('');
+                }
+              }*/
+
+            });
+          </script>
   </body>
 
 </html>
