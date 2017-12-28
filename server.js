@@ -241,26 +241,10 @@ app.get('/logout', function(req, res) {
 
 app.get('/library', isLoggedIn, function(req, res) {
   //MAIN PAGE
-  var sql_query = 'SELECT * FROM tbl_series;';
+  var sql_query = 'SELECT * FROM tbl_series ORDER BY name';
   db.executeRead(sql_query, function(val) {
-    //Get Series
+    //Get All Aviable Series
     if (val !== 'undefined' && val !== null) {
-      /*var content = '<table class="">';
-      content += '<tr><th></th></tr>';
-
-      for(var i = 0; i < val.length; i++) {
-        content += '<div class="col s12 m6"> <div class="card"> <div class="card-image">'
-        content += '<img src="data/thumbnails/' + val[i].thumbnail + '">'
-        content += '<span class="card-title">' + val[i].name + '</span>'
-        content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].id).toString() + '">'
-        content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
-        content += '<p>' + val[i].description + '</p>'
-        content += '</div> </div> </div> </div>'
-      }
-
-      content += '</table>';
-      */
-
       var content = ''
 
       for (var i = 0; i < val.length; i++) {
@@ -275,35 +259,29 @@ app.get('/library', isLoggedIn, function(req, res) {
 
       var series = content;
 
-      //Get RECENT
+      //Get RECENTLY WATCHED
       var sess = req.session;
-      sql_query = "SELECT w.last_watched, e.name, e.id, se.number, s.name name_series FROM tbl_watchlist w inner join tbl_episode e on e.id =  w.fk_episode inner join tbl_season_episode se on se.fk_episode = e.id inner join tbl_series s on s.id = se.fk_season where w.fk_user = " + sess.userid + " order by w.last_watched desc";
+      sql_query = "SELECT w.last_watched, e.id, e.name, e.description, se.number, sea.order_number, e.thumbnail, s.name name_series FROM tbl_watchlist w inner join tbl_episode e on e.id =  w.fk_episode inner join tbl_season_episode se on se.fk_episode = e.id inner join tbl_series s on s.id = se.fk_season inner join tbl_season sea on se.fk_season = sea.id where w.fk_user = " + sess.userid + " order by w.last_watched desc";
       db.executeRead(sql_query, function(val_watchlist) {
         if (val_watchlist !== 'undefined' && val_watchlist !== null) {
-          content = "";
-          content = '<table class="table table-striped table-responsive">';
-          content += '<tr><th>Series</th><th>Episode</th></tr>';
+          content = '';
 
           console.log(val_watchlist.length);
 
+          content += '<div class="row">'
           for (var i = 0; i < val_watchlist.length; i++) {
-            content += '<tr>';
-
-            content += '<td>';
-            content += '<p>' + val_watchlist[i].name_series + '</p>';
-            content += '</td>';
-
-            content += '<td>';
-            content += '<a href="/stream?id=' + val_watchlist[i].id + '">';
-            content += '<p>' + val_watchlist[i].number + '. ' + val_watchlist[i].name + '</p>';
-            content += '</a>'
-            content += '</td>';
-
-            content += '</tr>';
-
+            content += '<div class="col s6"> <div class="card"> <div class="card-image">'
+            content += '<img class="activator" src="data/thumbnails/' + val_watchlist[i].thumbnail + '">'
+            content += '<span class="card-title">' + val_watchlist[i].name + '</span>'
+            content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="' + (val_watchlist[i].id).toString() + '">'
+            content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+            content += '<p>' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number + '</p>'
+            content += ' <div class="card-reveal"> <span class="card-title grey-text text-darken-4">' + val_watchlist[i].name + ' - ' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number
+            content += '<i class="material-icons right">close</i></span><p>' + val_watchlist[i].description + '</p></div>'
+            content += '</div> </div> </div>'
           }
+          content += '</div>'
 
-          content += '</table>';
           var recent = content;
         }
 

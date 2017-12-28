@@ -3,17 +3,26 @@
 
   <body>
     <% include partials/navigation.ejs %>
-      <div class='container'>
-        <h1>Library.</h1>
+    <div class='container'>
+      <h1>Library.</h1>
 
-          <% if(recent && recent !== 'undefined' && recent !== null){ %>
-          <h2>Recently Watched</h2>
-          <%- recent %>
-          <% } %>
+      <div class="section">
+        <% if(recent && recent !== 'undefined' && recent !== null){ %>
+        <h4>Recently Watched</h4>
+        <%- recent %>
+        <% } %>
+      </div>
 
-          <br>
+      <div class="divider"></div>
+      <br>
 
-          <%- series %>
-          
+      <div class="section">
+        <h4>Series</h4>
+        <%- series %>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <br>
   </body>
 </html>
