@@ -2,20 +2,19 @@
 <% include partials/head.ejs %>
 <body>
     <% include partials/navigation.ejs %>
-    <div class='container'>
 
+    <div class='container'>
       <h1><%= rq[0].name %> - <%= rq[0].number %></h1>
       <h4><%= rq[0].series %> - <%= rq[0].name_season %></h4>
 
-      <div align='center' class='embed-responsive embed-responsive-16by9'>
-        <video id='myVideo' class='embed-responsive-item' poster=<%= src_info.poster %> controls>
-            <source src=<%= src_info.src %> type='video/mp4'>
-        </video>
-      </div>
+      <video id='myVideo' class='responsive-video' poster=<%= src_info.poster %> controls>
+          <source src=<%= src_info.src %> type='video/mp4'>
+      </video>
+
       <br>
       <p><%= rq[0].description %></p>
-
     </div>
+
     <script>
         var vid = document.getElementById('myVideo');
 

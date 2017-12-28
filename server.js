@@ -93,7 +93,6 @@ app.get('/remote', isLoggedIn, function(req, res) {
 
 //### Encryption
 var bcrypt = require('bcrypt');
-
 //###
 
 app.get('/register', function(req, res) {
@@ -243,7 +242,7 @@ app.get('/library', isLoggedIn, function(req, res) {
   //MAIN PAGE
   var sql_query = 'SELECT * FROM tbl_series ORDER BY name';
   db.executeRead(sql_query, function(val) {
-    //Get All Aviable Series
+    // get all aviable series
     if (val !== 'undefined' && val !== null) {
       var content = ''
 
@@ -273,10 +272,10 @@ app.get('/library', isLoggedIn, function(req, res) {
             content += '<div class="col s6"> <div class="card"> <div class="card-image">'
             content += '<img class="activator" src="data/thumbnails/' + val_watchlist[i].thumbnail + '">'
             content += '<span class="card-title">' + val_watchlist[i].name + '</span>'
-            content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="' + (val_watchlist[i].id).toString() + '">'
+            content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="stream?id=' + (val_watchlist[i].id).toString() + '">'
             content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
             content += '<p>' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number + '</p>'
-            content += ' <div class="card-reveal"> <span class="card-title grey-text text-darken-4">' + val_watchlist[i].name + ' - ' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number
+            content += '<div class="card-reveal"> <span class="card-title grey-text text-darken-4">' + val_watchlist[i].name + ' - ' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number
             content += '<i class="material-icons right">close</i></span><p>' + val_watchlist[i].description + '</p></div>'
             content += '</div> </div> </div>'
           }
@@ -303,51 +302,60 @@ app.get('/library/:id', isLoggedIn, function(req, res) {
   var series = querystring.escape(req.params.id);
 
   if (series !== 'undefined' && series !== null) {
-    var sql_query = 'SELECT sea.id, sea.fk_series, sea.name, sea.thumbnail, sea.description, sea.production_year FROM tbl_season sea WHERE sea.fk_series = ' + series + ' ORDER BY sea.order_number;';
+    var sql_query = 'SELECT se.name series_name, sea.id, sea.fk_series, sea.name, sea.thumbnail, sea.description, sea.production_year FROM tbl_season sea INNER JOIN tbl_series se ON se.id = sea.fk_series WHERE sea.fk_series = ' + series + ' ORDER BY sea.order_number;';
 
     db.executeRead(sql_query, function(val) {
       if (val !== 'undefined' && val !== null) {
-        /*var content = '<div class="table-responsive"><table>';
-        content += '<tr><th></th></tr>';
-
-        console.log(val.length);
-
-        for(var i = 0; i < val.length; i++) {
-          content += '<tr>';
-
-          content += '<td>';
-          content += '<h2>' + val[i].name + '</h2>';
-          content += '<h4>' + val[i].description + '</h4>';
-          content += '<h6>' + val[i].production_year + '</h6>';
-          content += '<a href="/library/' + val[i].fk_series + '/' + val[i].id + '">';
-          content += '<img src="../data/thumbnails/' + val[i].thumbnail + '" width="auto" class="img-responsive">';
-          content += '</a>';
-          content += '</td>';
-
-          content += '</tr>';
-        }
-
-        content += '</table></div>';
-        var series = content;*/
-
         var content = ''
 
+        content += '<div class="row">'
+
+        content += '<div class="col s12">'
+        content += '<ul class="tabs">'
+        // tabs
         for (var i = 0; i < val.length; i++) {
-          content += '<div class="col s12 m6"> <div class="card"> <div class="card-image">'
-          content += '<img src="../data/thumbnails/' + val[i].thumbnail + '">'
-          content += '<span class="card-title">' + val[i].name + '</span>'
-          content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + val[i].fk_series + '/' + val[i].id + '">'
-          content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
-          content += '<p>' + val[i].production_year + ' - ' + val[i].description + '</p>'
-          content += '</div> </div> </div> </div>'
+          content += '<li class="tab"><a href="#' + val[i].id + '">' + val[i].name + '</a></li>'
+        }
+        content += '</ul></div>'
+
+        // content
+        for (var i = 0; i < val.length; i++) {
+          content += '<div id="' + val[i].id + '" class="col s12">'
+
+          // get episodes for season
+          sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + val[i].id + ' ORDER BY seaepi.number';
+          db.executeRead(sql_query, function(val_episodes) {
+            if (val_episodes !== 'undefined' && val_episodes !== null) {
+
+              for (var i = 0; i < val_episodes.length; i++) {
+                content += '<div class="col s12"> <div class="card"> <div class="card-image">'
+                content += '<img src="/data/thumbnails/' + val_episodes[i].thumbnail + '">'
+                content += '<span class="card-title">' + val_episodes[i].number + '. ' + val_episodes[i].name + '</span>'
+                content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/stream?id' + val_episodes[i].id + '">'
+                content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+                content += '<p>' + val_episodes[i].description + '</p>'
+                content += '</div> </div> </div> </div>'
+              }
+            } else {
+              res.status(404);
+              res.render('404');
+            }
+          });
+
+          content += '</div>'
+        }
+        content += '</div>'
+
+        // old position
+        var data = {
+          series_name: val[0].series_name,
+          seasons: content
         }
 
-        var series = content;
-
-        res.render('library', {
-          series: series,
-          recent: undefined
+        res.render('library_seasons', {
+          data: data
         });
+
       } else {
         res.status(404);
         res.render('404');
@@ -379,7 +387,7 @@ app.get('/library/:id/:season', isLoggedIn, function(req, res) {
           content += '<td>';
           content += '<h2>' + val[i].number + '. ' + val[i].name + '</h2>';
           content += '<a href="/stream?id=' + val[i].id + '">';
-          content += '<img src="../../data/thumbnails/' + val[i].thumbnail + '" width="auto" class="img-responsive">';
+          content += '<img src="/data/thumbnails/' + val[i].thumbnail + '" width="auto" class="img-responsive">';
           content += '</a>';
           content += '</td>';
 

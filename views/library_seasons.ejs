@@ -7,20 +7,21 @@
       <h1>Library.</h1>
 
       <div class="section">
-        <% if(recent && recent !== 'undefined' && recent !== null){ %>
-        <h4>Recently Watched</h4>
-        <%- recent %>
-        <% } %>
+        <h4><%- data.series_name %></h4>
+
+        <%- data.seasons %>
       </div>
 
       <div class="divider"></div>
       <br>
 
-      <div class="section">
-        <h4>Series</h4>
-        <%- series %>
-      </div>
-    </div>
+
+    <script>
+      $(document).ready(function(){
+        $('ul.tabs').tabs();
+      });
+    </script>
+
 
   </body>
 </html>
