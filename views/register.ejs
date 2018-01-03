@@ -34,17 +34,22 @@
               <br>
 
               <div class="input-field col s12">
-                <input id="username" name="username" type="text" class="validate" required autofocus>
+                <input id="username" name="username" type="text" class="validate" value="<%- username %>" required autofocus>
                 <label for="username">Username</label>
               </div>
 
-              <div class="input-field col s6">
-                <input id="password" name="password" type="password" class="validate" required>
+              <div class="input-field col s12">
+                <input id="email" name="email" type="email" class="validate" value="<%- email %>" required>
+                <label for="email">E-Mail</label>
+              </div>
+
+              <div class="input-field col s12 m6">
+                <input id="password" name="password" type="password" class="validate" value="<%- password %>" required>
                 <label for="password">Password</label>
               </div>
 
-              <div class="input-field col s6">
-                <input id="password_repeat" name="password_repeat" type="password" class="validate" required>
+              <div class="input-field col s12 m6">
+                <input id="password_repeat" name="password_repeat" type="password" value="<%- password_repeat %>" class="validate" required>
                 <label for="password_repeat">Repeat Password</label>
               </div>
 

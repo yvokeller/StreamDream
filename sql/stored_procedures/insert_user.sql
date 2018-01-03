@@ -27,7 +27,7 @@ INSERT INTO tbl_user (username, password, email)
         WHERE username = d_username
         OR email = d_email);
   SET @last_id = LAST_INSERT_ID();
-  SELECT @last_id;
+  SELECT @last_id AS last_id;
 END$$
 
 DELIMITER;

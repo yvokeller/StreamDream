@@ -16,6 +16,8 @@ var bodyParser = require('body-parser');
 
 var async = require('async');
 
+var omdb = require('./omdb');
+
 var urlencodedParser = bodyParser.urlencoded({
   extended: false
 });
@@ -39,18 +41,30 @@ app.use(session({
   }
 }));
 
+//Validation Functions
+function validateEmail(email) {
+  var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  return re.test(email)
+}
+
 //Function to Check if User is logged in
 function isLoggedIn(req, res, next) {
+  next();
+  /*
   if (req.session.authenticated === true) {
     next();
   } else {
     res.redirect('/login');
   }
+  */
 }
 
 //DB Connection
-var db = require('./db');
-var con = db.con;
+//var db = require('./db');
+//var con = db.con;
+
+//ODBC DB
+var db = require('./db_odbc.js');
 
 //Manage Requested Static Files
 app.use('/assets', express.static('assets'));
@@ -99,24 +113,35 @@ var bcrypt = require('bcrypt');
 
 app.get('/register', function(req, res) {
   res.render('register', {
-    errors: ''
+    errors: '',
+    username: '',
+    email: '',
+    password: '',
+    password_repeat: ''
   });
 });
 
 app.post('/register', urlencodedParser, function(req, res) {
   var msg = '';
   var state = true;
-  var password, username;
+  var password, password_repeat, email, username;
 
-  if (req.body.username && req.body.password) {
+  if (req.body.username && req.body.password && req.body.email) {
     //VARS
     username = querystring.escape(req.body.username);
+    email = req.body.email;
     password = querystring.escape(req.body.password);
-    var password_repeat = querystring.escape(req.body.password_repeat);
+    password_repeat = querystring.escape(req.body.password_repeat);
 
     //Username Check
     if (username.length >= 3) {} else {
-      msg += "- The username needs to be at least 3 characters long!"
+      msg += "username needs to be at least 3 characters long! "
+      state = false;
+    }
+
+    //E-Mail Check
+    if (validateEmail(email) == false) {
+      msg += "e-mail address has an invalid format!"
       state = false;
     }
 
@@ -125,15 +150,15 @@ app.post('/register', urlencodedParser, function(req, res) {
       if (password_repeat == password) {
         //Everthing OK
       } else {
-        msg += "- The passwords don't match!"
+        msg += "the passwords don't match! "
         state = false;
       }
     } else {
-      msg += "- The password has to be at least 4 characters long!"
+      msg += "the password has to be at least 4 characters long! "
       state = false;
     }
   } else {
-    msg += "- Some fields are empty!"
+    msg += "some fields are empty! "
     state = false;
   }
 
@@ -144,29 +169,53 @@ app.post('/register', urlencodedParser, function(req, res) {
   //Wenn Status = True
   if (state == true) {
     //Try to Register User
-    var sql_query = 'INSERT INTO tbl_user(username, password) VALUES("' + username + '","' + hash + '")';
-    db.executeRead(sql_query, function(val) {
-      msg += 'Successfully registered! You can now log in.';
-      var feedback = '<div class="card-panel indigo lighten-5 center">' + msg + '</div>';
+    //var sql_query = 'INSERT INTO tbl_user(username, password) VALUES("' + username + '","' + hash + '")';
+    var sql_query = 'CALL insert_user("' + username +'", "' + hash + '", "' + email + '")'
+
+    db.executeQuery(sql_query, function(val) {
+      var data_row = val[0] // erste Zeile der data row
+      //var stored_procedure_row = val[1]
+
+      var last_id = data_row.last_id
+      var feedback = ''
+
+      if(last_id == 0){
+        // no new row added in db
+        console.log('user already registered')
+
+        msg += 'User already registered. Try a different username/email.';
+        feedback = '<div class="card-panel red lighten-4 center">' + msg + '</div>';
+      } else {
+        // user registered
+        msg += 'Successfully registered! You can now log in.';
+        feedback = '<div class="card-panel indigo lighten-4 center">' + msg + '</div>';
+      }
 
       if (msg = '') {
         feedback = '';
       }
 
-      console.log('Msg: ' + msg);
       res.render('register', {
-        errors: feedback
+        errors: feedback,
+        username: '',
+        email: '',
+        password: '',
+        password_repeat: ''
       });
     });
   } else {
-    var feedback = '<p class="label label-danger error">' + msg + '<p>';
+    var feedback = '<div class="card-panel red lighten-4 center">' + msg + '</div>';
 
     if (msg = '') {
       feedback = '';
     }
-    console.log('Msg: ' + msg)
+
     res.render('register', {
-      errors: feedback
+      errors: feedback,
+      username: username,
+      email: email,
+      password: password,
+      password_repeat: password_repeat
     });
   }
 });
@@ -188,23 +237,26 @@ app.post('/login', urlencodedParser, function(req, res) {
 
     console.log('Logging In: ' + username);
 
-    var sql_query = 'SELECT * FROM tbl_user WHERE username = "' + username + '"';
-    db.executeRead(sql_query, function(val) {
+    var sql_query = 'CALL select_user_by_name("' + username + '")';
+    db.executeQuery(sql_query, function(val) {
+      var data_row = val[0]
+      //var stored_procedure_row = val[1]
+      console.log('login db response: ' + JSON.stringify(val))
 
-      if (val.length === 0) {
-        //No Result
-        console.log('Account doenst exist.');
+      if (data_row == undefined) {
+        //No Result in DB
+        console.log('Account doesnt exist.');
         res.render('login', {
-          errors: '<div class="card-panel indigo lighten-5 center">This account doesnt exist!</div>'
+          errors: '<div class="card-panel red lighten-4 center">This account doesnt exist!</div>'
         });
       } else {
         //Account found
-        var hash = val[0].password;
+        var hash = data_row.password;
         if (bcrypt.compareSync(password, hash)) {
           sess.authenticated = true;
 
-          sess.username = val[0].username;
-          sess.userid = val[0].id;
+          sess.username = data_row.username;
+          sess.userid = data_row.id;
 
           //Create Cookie for later Access
           res.cookie('user', sess.username, {
@@ -216,7 +268,7 @@ app.post('/login', urlencodedParser, function(req, res) {
           res.redirect('/');
         } else {
           res.render('login', {
-            errors: '<div class="card-panel indigo lighten-5 center">Wrong password!</div>'
+            errors: '<div class="card-panel red lighten-4 center">Wrong password!</div>'
           });
         }
       }
@@ -224,7 +276,7 @@ app.post('/login', urlencodedParser, function(req, res) {
   } else {
     //Not all Parameters Given / False
     res.render('login', {
-      errors: '<div class="card-panel indigo lighten-5 center">Invalid login credentials!</div>'
+      errors: '<div class="card-panel red lighten-4 center">Invalid login credentials!</div>'
     });
   }
 });
@@ -243,17 +295,17 @@ app.get('/logout', function(req, res) {
 app.get('/library', isLoggedIn, function(req, res) {
   //MAIN PAGE
   var sql_query = 'SELECT * FROM tbl_series ORDER BY name';
-  db.executeRead(sql_query, function(val) {
+  db.executeQuery(sql_query, function(val) {
     // get all aviable series
     if (val !== 'undefined' && val !== null) {
       var content = ''
-
+      //
       content += '<div class="row">'
       for (var i = 0; i < val.length; i++) {
-        content += '<div class="col s12 m6 l6 xl6"> <div class="card"> <div class="card-image">'
-        content += '<img src="data/thumbnails/' + val[i].thumbnail + '">'
+        content += '<div class="col s12 m6 l6 xl6 cards-container"> <div class="card"> <div class="card-image">'
+        content += '<img src="' + val[i].thumbnail + '">'
         content += '<span class="card-title">' + val[i].name + '</span>'
-        content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].id).toString() + '">'
+        content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].name).toString() + '">'
         content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
         content += '<p>' + val[i].description + '</p>'
         content += '</div> </div> </div>'
@@ -265,7 +317,7 @@ app.get('/library', isLoggedIn, function(req, res) {
       //Get RECENTLY WATCHED
       var sess = req.session;
       sql_query = "SELECT w.last_watched, e.id, e.name, e.description, se.number, sea.order_number, e.thumbnail, s.name name_series FROM tbl_watchlist w inner join tbl_episode e on e.id =  w.fk_episode inner join tbl_season_episode se on se.fk_episode = e.id inner join tbl_series s on s.id = se.fk_season inner join tbl_season sea on se.fk_season = sea.id where w.fk_user = " + sess.userid + " order by w.last_watched desc";
-      db.executeRead(sql_query, function(val_watchlist) {
+      db.executeQuery(sql_query, function(val_watchlist) {
         if (val_watchlist !== 'undefined' && val_watchlist !== null) {
           content = '';
 
@@ -274,7 +326,7 @@ app.get('/library', isLoggedIn, function(req, res) {
           content += '<div class="row">'
           for (var i = 0; i < val_watchlist.length; i++) {
             content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
-            content += '<img class="activator" src="data/thumbnails/' + val_watchlist[i].thumbnail + '">'
+            content += '<img class="activator" src="' + val_watchlist[i].thumbnail + '">'
             content += '<span class="card-title">' + val_watchlist[i].name + '</span>'
             content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="stream?id=' + (val_watchlist[i].id).toString() + '">'
             content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
@@ -302,9 +354,10 @@ app.get('/library', isLoggedIn, function(req, res) {
   });
 });
 
-app.get('/library/:id', isLoggedIn, function(req, res) {
+app.get('/library/:series_name', isLoggedIn, function(req, res) {
   // define query strings
-  var series = querystring.escape(req.params.id);
+  var series = decodeURI(querystring.escape(req.params.series_name));
+  console.log('selected series: ' + series)
 
   if (series !== 'undefined' && series !== null) {
     var content = ''
@@ -315,8 +368,9 @@ app.get('/library/:id', isLoggedIn, function(req, res) {
     let promiseReadSeason = function(){
       return new Promise(function(resolve, reject) {
         console.log('1')
-        var sql_query = 'SELECT se.name series_name, sea.id, sea.fk_series, sea.name, sea.thumbnail, sea.description, sea.production_year FROM tbl_season sea INNER JOIN tbl_series se ON se.id = sea.fk_series WHERE sea.fk_series = ' + series + ' ORDER BY sea.order_number;'
-        db.executeRead(sql_query, function(val) {
+        //var sql_query = 'SELECT se.name series_name, sea.id, sea.fk_series, sea.name FROM tbl_season sea INNER JOIN tbl_series se ON se.id = sea.fk_series WHERE sea.fk_series = ' + series + ' ORDER BY sea.order_number;'
+        var sql_query = 'CALL select_seasons_by_series("' + series + '")'
+        db.executeQuery(sql_query, function(val) {
           if (val !== 'undefined' && val !== null) {
             // set value of val_season --> used later to read episodes
             val_season = val
@@ -354,8 +408,9 @@ app.get('/library/:id', isLoggedIn, function(req, res) {
 
         async.each(val_season, function(row_season, callback) {
           //process row_season
-          sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + row_season.id + ' ORDER BY seaepi.number';
-          db.executeRead(sql_query, function(val_episodes) {
+          //sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + row_season.id + ' ORDER BY seaepi.number';
+          sql_query = 'CALL select_episodes_by_season_and_series("' + series + '", ' + row_season.id + ')'
+          db.executeQuery(sql_query, function(val_episodes) {
             if (val_episodes !== 'undefined' && val_episodes !== null) {
 
               episode_content += '<div id="' + row_season.id + '" class="col s12">'
@@ -363,7 +418,7 @@ app.get('/library/:id', isLoggedIn, function(req, res) {
               async.each(val_episodes, function(row_episodes, callback1) {
                 //process row_episodes
                 episode_content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
-                episode_content += '<img src="/data/thumbnails/' + row_episodes.thumbnail + '">'
+                episode_content += '<img src="' + row_episodes.thumbnail + '">'
                 episode_content += '<span class="card-title">' + row_episodes.number + '. ' + row_episodes.name + '</span>'
                 episode_content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/stream?id=' + row_episodes.id + '">'
                 episode_content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
@@ -411,6 +466,11 @@ app.get('/library/:id', isLoggedIn, function(req, res) {
   }
 });
 
+app.get('/admin', isLoggedIn, function(req, res) {
+  res.render('admin')
+});
+
+/*
 app.get('/library/:id/:season', isLoggedIn, function(req, res) {
   var series = querystring.escape(req.params.id);
   var season = querystring.escape(req.params.season);
@@ -418,7 +478,7 @@ app.get('/library/:id/:season', isLoggedIn, function(req, res) {
   if (season !== 'undefined' && season !== null && series !== 'undefined' && series !== null) {
     var sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + season + ' ORDER BY seaepi.number';
 
-    db.executeRead(sql_query, function(val) {
+    db.executeQuery(sql_query, function(val) {
       if (val !== 'undefined' && val !== null) {
         var content = '<div class="table-responsive"><table>';
         content += '<tr><th></th></tr>';
@@ -455,19 +515,20 @@ app.get('/library/:id/:season', isLoggedIn, function(req, res) {
     res.render('404');
   }
 });
+*/
 
 app.get('/stream', isLoggedIn, function(req, res) {
   var sess = req.session;
   var episode = querystring.escape(req.query.id);
   if (episode !== 'undefined' && episode !== null) {
-    var sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number, sea.name name_season, sea.production_year, ser.name name_series, ser.description desc_series, sea.order_number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE e.id = ' + episode;
-
-    db.executeRead(sql_query, function(val) {
+    //var sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number, sea.name name_season, sea.production_year, ser.name name_series, ser.description desc_series, sea.order_number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE e.id = ' + episode;
+    var sql_query = 'CALL select_episode_by_id(' + episode + ')'
+    db.executeQuery(sql_query, function(val) {
       if (val !== 'undefined' && val !== null) {
 
         var src_info = {
           src: 'play?id=' + val[0].id,
-          poster: 'data/thumbnails/' + val[0].thumbnail,
+          poster: val[0].thumbnail,
           episode_name: val[0].name,
           episode_index: val[0].name_series + ' S' + val[0].order_number + 'E' + val[0].number,
           episode_desc: val[0].description
@@ -513,7 +574,7 @@ app.get('/play', isLoggedIn, function(req, res) {
   var episode = querystring.escape(req.query.id);
   var sql_query = 'SELECT e.src FROM tbl_episode e WHERE id = ' + episode;
 
-  db.executeRead(sql_query, function(val) {
+  db.executeQuery(sql_query, function(val) {
     if (val !== 'undefined' && val !== null) {
       //FOUND SOMETHING --> Stream
       var file = path.resolve(__dirname + "/data/movies/" + val[0].src);
@@ -569,9 +630,6 @@ app.get('/play', isLoggedIn, function(req, res) {
 });
 
 app.get('/omdb', function(req, res) {
-  var omdb = require('./omdb');
-
-
   /*
   omdb.GET("i=tt3896198", (response) => {
     console.log('response : ' + JSON.stringify(response))
@@ -581,12 +639,11 @@ app.get('/omdb', function(req, res) {
   });
   */
 
-  omdb.getSeries('Prison Break', function(response){
+  omdb.getSeries('The 100', function(response){
     console.log('response : ' + JSON.stringify(response))
-
   });
 
-  omdb.GET('t=Game Of Thrones', function(response){
+  omdb.GET('t=Game Of Thrones&Season=4', function(response){
     console.log('response : ' + JSON.stringify(response))
 
     res.send(response)
@@ -615,7 +672,6 @@ app.get('/download', function(req, res) {
   });*/
 
   console.log('requesting')
-
 
   rest.POST2("/api/login", 'username:root&password:1234', (response) => {
     console.log('response:' + response)
@@ -721,6 +777,15 @@ io.sockets.on('connection', function(socket) {
   //###############
   */
 
+  //Load series
+  socket.on('load series', function(series_name){
+    omdb.getSeries(series_name, function(response){
+      console.log('response : ' + JSON.stringify(response))
+
+      socket.emit('response', JSON.stringify(response))
+    });
+  });
+
   //Join Room
   socket.on('join room', function(data) {
     var username = data.username;
@@ -734,7 +799,7 @@ io.sockets.on('connection', function(socket) {
 
     socket.emit('joined room', {
       members: numClients
-    })
+    });
   });
 
   //Disconnect
@@ -804,7 +869,8 @@ io.sockets.on('connection', function(socket) {
 
     //Read Watchtime from DB
     var sql_query = 'SELECT watch_time FROM tbl_watchlist WHERE fk_user = ' + data.user + ' and fk_episode = ' + data.episode + ';';
-    db.executeRead(sql_query, function(val) {
+    var sql_query = 'CALL select_watchtime_by_user_and_episode(' + data.episode + ', ' + data.username + ')'
+    db.executeQuery(sql_query, function(val) {
       if (val.length === 0) {
         //No Entry in DB --> WatchTime 0
         socket.emit('set watchtime', {
@@ -828,19 +894,19 @@ io.sockets.on('connection', function(socket) {
     } else {
       //Insert DB
       var sql_query = 'SELECT COUNT(id) entry_count FROM tbl_watchlist WHERE fk_user = ' + data.user + ' and fk_episode = ' + data.episode + ';';
-      db.executeRead(sql_query, function(val) {
+      db.executeQuery(sql_query, function(val) {
         if (val[0].entry_count > 0) {
           //UPDATE
           console.log('Updating, already exists.');
           sql_query = 'UPDATE tbl_watchlist SET watch_time = ' + data.curr_time + ', last_watched = CURRENT_TIMESTAMP WHERE fk_user = ' + data.user + ' and fk_episode = ' + data.episode + ';';
-          db.executeRead(sql_query, function(val) {
+          db.executeQuery(sql_query, function(val) {
             //val = db info
           });
         } else {
           //INSERT
           console.log('Inserting, doesnt exist.');
           sql_query = 'INSERT INTO tbl_watchlist(fk_episode, fk_user, plays_count, watch_time) VALUES(' + data.episode + ',' + data.user + ', 0,' + data.curr_time + ');';
-          db.executeRead(sql_query, function(val) {
+          db.executeQuery(sql_query, function(val) {
             //val = db info
           });
         }

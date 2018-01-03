@@ -2,18 +2,21 @@
 <% include partials/head.ejs %>
 <body>
     <% include partials/navigation.ejs %>
-
     <div class='container'>
       <h1>Stream.</h1>
-      <h4><%- src_info.episode_name %></h4>
-      <h5><%- src_info.episode_index %></h5>
 
-      <video id='myVideo' class='responsive-video' poster=<%= src_info.poster %> controls>
-          <source src=<%= src_info.src %> type='video/mp4'>
-      </video>
+      <div class="section">
+        <h4><%- src_info.episode_name %></h4>
+        <h5><%- src_info.episode_index %></h5>
 
-      <br>
-      <p><%- src_info.episode_desc %></p>
+        <video id='myVideo' onkeydown="keyPress(event)" width=100% class='responsive-video' poster=<%= src_info.poster %> controls>
+            <source src=<%= src_info.src %> type='video/mp4'>
+        </video>
+
+        <br>
+        <p><%- src_info.episode_desc %></p>
+      </div>
+
     </div>
 
     <script>
@@ -99,6 +102,13 @@
 
         function playVideo(){
           vid.play();
+        }
+
+        function keyPress(event) {
+          var x = event.keyCode;
+          if (x == 32) {  // 27 is the SPAcE key
+            pauseVideo();
+          }
         }
 
         //Query Parameter Function

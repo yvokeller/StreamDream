@@ -6,7 +6,7 @@ var con = mysql.createConnection({
   password: ''
 });
 
-function executeRead(sql, callback){
+function executeQuery(sql, callback){
   var result = con.query(sql, function (err, res) {
       if (err){
         if (err.code === 'ER_DUP_ENTRY') {
@@ -25,12 +25,12 @@ con.connect(function(err) {
   console.log('Connected!');
 });
 
-con.query('USE stream_dream;', function (err, result) {
+con.query('USE stream_dream5;', function (err, result) {
     if (err) throw err;
     console.log('Using database');
 });
 
 module.exports = {
   con: con,
-  executeRead: executeRead
+  executeQuery: executeQuery
 };

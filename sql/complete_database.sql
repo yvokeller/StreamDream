@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Erstellungszeit: 01. Jan 2018 um 15:06
+-- Erstellungszeit: 01. Jan 2018 um 15:47
 -- Server-Version: 10.1.19-MariaDB
 -- PHP-Version: 5.6.28
 
@@ -40,16 +40,16 @@ INSERT INTO tbl_episode (name, thumbnail, src, description, released, year, coun
   SELECT @last_id AS last_id;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `insert_season` (IN `d_fk_series` INT(10), IN `d_name` VARCHAR(255), IN `d_order_number` INT(10))  BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `insert_season` (IN `d_series_name` VARCHAR(255), IN `d_name` VARCHAR(255), IN `d_order_number` INT(10))  BEGIN
 
 
 
 INSERT INTO tbl_season (fk_series, name, order_number)
-  SELECT d_fk_series, d_name, d_order_number FROM DUAL
+  SELECT (SELECT id FROM tbl_series ser WHERE ser.name = d_series_name), d_name, d_order_number FROM DUAL
     WHERE NOT EXISTS
-      (SELECT name FROM tbl_season
-        WHERE order_number = d_order_number
-        AND fk_series = d_fk_series);
+      (SELECT name FROM tbl_season sea
+        WHERE sea.order_number = d_order_number
+        AND sea.fk_series = (SELECT id FROM tbl_series ser WHERE ser.name = d_series_name));
   SET @last_id = LAST_INSERT_ID();
   SELECT @last_id AS last_id;
 END$$
@@ -366,32 +366,32 @@ ALTER TABLE `tbl_watchlist`
 -- AUTO_INCREMENT für Tabelle `tbl_episode`
 --
 ALTER TABLE `tbl_episode`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100000;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT für Tabelle `tbl_season`
 --
 ALTER TABLE `tbl_season`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100000;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT für Tabelle `tbl_season_episode`
 --
 ALTER TABLE `tbl_season_episode`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100000;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT für Tabelle `tbl_series`
 --
 ALTER TABLE `tbl_series`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100000;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT für Tabelle `tbl_user`
 --
 ALTER TABLE `tbl_user`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100000;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 -- AUTO_INCREMENT für Tabelle `tbl_watchlist`
 --
 ALTER TABLE `tbl_watchlist`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100000;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 --
 -- Constraints der exportierten Tabellen
 --

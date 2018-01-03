@@ -1,0 +1,55 @@
+<html>
+<% include partials/head.ejs %>
+
+  <body>
+    <% include partials/navigation.ejs %>
+    <div class='container'>
+      <h1>Admin.</h1>
+
+      <div class="section">
+        <h4>Add Series To Library</h4>
+
+        <br>
+
+        <div class="input-field col s12 m12">
+          <input id="series_name" name="series_name" type="text" class="validate" required autofocus>
+          <label for="series_name">Series Name</label>
+        </div>
+
+        <button id="btnLoad" class="btn waves-effect waves-light light-blue lighten-2">Load Series Into Library
+          <i class="material-icons right">arrow_downward</i>
+        </button>
+
+        <br>
+
+        <div id="response">
+        </div>
+
+        <br>
+
+      </div>
+
+    </div>
+
+    <script>
+      $(function() {
+        var socket = io.connect();
+
+        var $btnLoad = $('#btnLoad');
+        var $series_name = $('#series_name');
+        var $response = $('#response');
+
+        $btnLoad.click(function(e){
+          console.log('Load Series Button Clicked!');
+          socket.emit('load series', $series_name.val());
+        });
+
+        socket.on('response', function(response) {
+          $response.val(response);
+        });
+
+      });
+    </script>
+
+  </body>
+</html>

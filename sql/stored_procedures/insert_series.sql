@@ -27,7 +27,7 @@ INSERT INTO tbl_series (name, description, genre, thumbnail)
       (SELECT name FROM tbl_series
         WHERE name = d_name);
   SET @last_id = LAST_INSERT_ID();
-  SELECT @last_id;
+  SELECT @last_id AS last_id;
 END$$
 
 DELIMITER;

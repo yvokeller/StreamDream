@@ -32,7 +32,7 @@ INSERT INTO tbl_episode (name, thumbnail, src, description, released, year, coun
         WHERE name = d_name
         AND description = d_description);
   SET @last_id = LAST_INSERT_ID();
-  SELECT @last_id;
+  SELECT @last_id AS last_id;
 END$$
 
 DELIMITER;

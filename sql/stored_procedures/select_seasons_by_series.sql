@@ -18,7 +18,7 @@ BEGIN
   Call: call select_seasons_by_series('The Walking Dead')
 **/
 
-SELECT se.name series_name, sea.id, sea.fk_series, sea.name, sea.thumbnail, sea.description, sea.production_year
+SELECT se.name series_name, sea.id, sea.fk_series, sea.name
 FROM tbl_season sea
 INNER JOIN tbl_series se ON se.id = sea.fk_series
 WHERE sea.fk_series = (SELECT se.id from tbl_series se where se.name = d_series_name)
@@ -27,5 +27,3 @@ ORDER BY sea.order_number;
 END$$
 
 DELIMITER;
-
-weiterfahren bei 357!
