@@ -16,8 +16,6 @@ var bodyParser = require('body-parser');
 
 var async = require('async');
 
-var omdb = require('./omdb');
-
 var urlencodedParser = bodyParser.urlencoded({
   extended: false
 });
@@ -49,22 +47,22 @@ function validateEmail(email) {
 
 //Function to Check if User is logged in
 function isLoggedIn(req, res, next) {
-  next();
-  /*
   if (req.session.authenticated === true) {
     next();
   } else {
     res.redirect('/login');
   }
-  */
 }
 
 //DB Connection
-//var db = require('./db');
-//var con = db.con;
+var db = require('./db');
+var con = db.con;
 
 //ODBC DB
-var db = require('./db_odbc.js');
+//var db = require('./db_odbc.js');
+
+//OMDB
+var omdb = require('./omdb');
 
 //Manage Requested Static Files
 app.use('/assets', express.static('assets'));
@@ -173,7 +171,8 @@ app.post('/register', urlencodedParser, function(req, res) {
     var sql_query = 'CALL insert_user("' + username +'", "' + hash + '", "' + email + '")'
 
     db.executeQuery(sql_query, function(val) {
-      var data_row = val[0] // erste Zeile der data row
+      var data_row = val[0][0] // erste Zeile der data row
+      var data_row = val[0] // odbc version..
       //var stored_procedure_row = val[1]
 
       var last_id = data_row.last_id
@@ -239,7 +238,7 @@ app.post('/login', urlencodedParser, function(req, res) {
 
     var sql_query = 'CALL select_user_by_name("' + username + '")';
     db.executeQuery(sql_query, function(val) {
-      var data_row = val[0]
+      var data_row = val[0][0]
       //var stored_procedure_row = val[1]
       console.log('login db response: ' + JSON.stringify(val))
 
@@ -316,23 +315,25 @@ app.get('/library', isLoggedIn, function(req, res) {
 
       //Get RECENTLY WATCHED
       var sess = req.session;
-      sql_query = "SELECT w.last_watched, e.id, e.name, e.description, se.number, sea.order_number, e.thumbnail, s.name name_series FROM tbl_watchlist w inner join tbl_episode e on e.id =  w.fk_episode inner join tbl_season_episode se on se.fk_episode = e.id inner join tbl_series s on s.id = se.fk_season inner join tbl_season sea on se.fk_season = sea.id where w.fk_user = " + sess.userid + " order by w.last_watched desc";
+      //sql_query = "SELECT w.last_watched, e.id, e.name, e.description, se.number, sea.order_number, e.thumbnail, s.name name_series FROM tbl_watchlist w inner join tbl_episode e on e.id =  w.fk_episode inner join tbl_season_episode se on se.fk_episode = e.id inner join tbl_series s on s.id = se.fk_season inner join tbl_season sea on se.fk_season = sea.id where w.fk_user = " + sess.userid + " order by w.last_watched desc";
+      sql_query = 'CALL select_recently_watched_by_username("' + sess.username + '")'
+      console.log('query: ' + sql_query)
       db.executeQuery(sql_query, function(val_watchlist) {
-        if (val_watchlist !== 'undefined' && val_watchlist !== null) {
+        var data_row = val_watchlist[0] // [0] is Data, [1] is stored procedure info
+
+        if (data_row !== 'undefined' && data_row !== null) {
           content = '';
 
-          console.log(val_watchlist.length);
-
           content += '<div class="row">'
-          for (var i = 0; i < val_watchlist.length; i++) {
+          for (var i = 0; i < data_row.length; i++) {
             content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
-            content += '<img class="activator" src="' + val_watchlist[i].thumbnail + '">'
-            content += '<span class="card-title">' + val_watchlist[i].name + '</span>'
-            content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="stream?id=' + (val_watchlist[i].id).toString() + '">'
+            content += '<img class="activator" src="' + data_row[i].thumbnail + '">'
+            content += '<span class="card-title">' + data_row[i].name + '</span>'
+            content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="stream?id=' + (data_row[i].id).toString() + '">'
             content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
-            content += '<p>' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number + '</p>'
-            content += '<div class="card-reveal"> <span class="card-title grey-text text-darken-4">' + val_watchlist[i].name + ' - ' + val_watchlist[i].name_series + ' S' + val_watchlist[i].order_number + 'E' + val_watchlist[i].number
-            content += '<i class="material-icons right">close</i></span><p>' + val_watchlist[i].description + '</p></div>'
+            content += '<p>' + data_row[i].name_series + ' S' + data_row[i].order_number + 'E' + data_row[i].number + '</p>'
+            content += '<div class="card-reveal"> <span class="card-title grey-text text-darken-4">' + data_row[i].name + ' - ' + data_row[i].name_series + ' S' + data_row[i].order_number + 'E' + data_row[i].number
+            content += '<i class="material-icons right">close</i></span><p>' + data_row[i].description + '</p></div>'
             content += '</div> </div> </div>'
           }
           content += '</div>'
@@ -411,6 +412,7 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
           //sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + row_season.id + ' ORDER BY seaepi.number';
           sql_query = 'CALL select_episodes_by_season_and_series("' + series + '", ' + row_season.id + ')'
           db.executeQuery(sql_query, function(val_episodes) {
+
             if (val_episodes !== 'undefined' && val_episodes !== null) {
 
               episode_content += '<div id="' + row_season.id + '" class="col s12">'

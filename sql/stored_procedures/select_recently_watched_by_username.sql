@@ -22,10 +22,11 @@ SELECT w.last_watched, e.id, e.name, e.description, se.number, sea.order_number,
 FROM tbl_watchlist w
 INNER JOIN tbl_episode e ON e.id = w.fk_episode
 INNER JOIN tbl_season_episode se ON se.fk_episode = e.id
-INNER JOIN tbl_series s ON s.id = se.fk_season
 INNER JOIN tbl_season sea ON se.fk_season = sea.id
+INNER JOIN tbl_series s ON s.id = sea.fk_series
 WHERE w.fk_user = (SELECT u.id from tbl_user u where u.username = d_username)
-ORDER BY w.last_watched desc;
+ORDER BY w.last_watched desc
+LIMIT 5;
 
 END$$
 
