@@ -958,4 +958,37 @@ io.sockets.on('connection', function(socket) {
       });
     }
   });
+
+  //Search For Series
+  socket.on('search series', function(data) {
+    //Unmute All Browsers
+    console.log('recieved search request');
+
+    var sql_query = 'SELECT * FROM tbl_series WHERE name LIKE "%' + data.search + '%"';
+    console.log('query: ' + sql_query)
+    db.executeQuery(sql_query, function(val) {
+      // get all aviable series
+      if (val !== 'undefined' && val !== null) {
+        var content = ''
+        //
+        content += '<div class="row">'
+        for (var i = 0; i < val.length; i++) {
+          content += '<div class="col s12 m6 l6 xl3 cards-container"> <div class="card"> <div class="card-image">'
+          content += '<img src="' + val[i].thumbnail + '">'
+          content += '<span class="card-title">' + val[i].name + '</span>'
+          content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].name).toString() + '">'
+          content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+          content += '<p>' + val[i].description + '</p>'
+          content += '</div> </div> </div>'
+        }
+        content += '</div>'
+
+        var series = content
+
+        socket.emit('search result', {
+          series: series
+        })
+      }
+    })
+  });
 });

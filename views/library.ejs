@@ -25,11 +25,13 @@
             <div class="input-field col s12">
               <i class="material-icons right">search</i>
               <input id="search" name="search" type="text" class="validate" required>
-              <label for="username">Search For Series</label>
+              <label for="search">Search For Series</label>
             </div>
           </div>
 
-          <%- series %>
+          <div id="series_content" name="series_content">
+            <%- series %>
+          </div>
         </div>
 
         <div class="divider"></div>
@@ -37,6 +39,34 @@
         <br>
         <br>
       </div>
+
+      <script>
+
+        $(function(){
+          var socket = io.connect();
+
+          var $search = $('#search');
+          var $series_content = $('#series_content');
+
+          //On Search Input
+          $search.on('input', function() {
+            console.log($search.val()) // get the current value of the input field.
+
+            socket.emit('search series', {
+              search: $search.val()
+            })
+
+          });
+
+          //When search result comes back
+          socket.on('search result', function(data){
+            $series_content.html(data.series)
+            console.log('set result to ' + data.series)
+          })
+
+        })
+
+      </script>
 
   </body>
 
