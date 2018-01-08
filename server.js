@@ -86,12 +86,17 @@ app.get('/remote', isLoggedIn, function(req, res) {
     //Loop Trough Room Members
     var numClients = (typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
     var content = '';
-    content += 'Clients in Room: ' + numClients;
+
+    content += '<ul class="collapsible" data-collapsible="accordion">'
 
     for (var clientId in clients) {
       var clientSocket = io.sockets.connected[clientId];
-      content += '<br>- ' + clientSocket.client_name;
+
+      content += '<li> <div class="collapsible-header"> <i class="material-icons">phonelink</i> ' + clientSocket.client_name + ' </div>'
+      content += '</li>'
     }
+
+    content += '</ul>'
 
     res.render('remote', {
       conn: content,
@@ -168,7 +173,7 @@ app.post('/register', urlencodedParser, function(req, res) {
   if (state == true) {
     //Try to Register User
     //var sql_query = 'INSERT INTO tbl_user(username, password) VALUES("' + username + '","' + hash + '")';
-    var sql_query = 'CALL insert_user("' + username +'", "' + hash + '", "' + email + '")'
+    var sql_query = 'CALL insert_user("' + username + '", "' + hash + '", "' + email + '")'
 
     db.executeQuery(sql_query, function(val) {
       var data_row = val[0][0] // erste Zeile der data row
@@ -178,7 +183,7 @@ app.post('/register', urlencodedParser, function(req, res) {
       var last_id = data_row.last_id
       var feedback = ''
 
-      if(last_id == 0){
+      if (last_id == 0) {
         // no new row added in db
         console.log('user already registered')
 
@@ -301,7 +306,7 @@ app.get('/library', isLoggedIn, function(req, res) {
       //
       content += '<div class="row">'
       for (var i = 0; i < val.length; i++) {
-        content += '<div class="col s12 m6 l6 xl6 cards-container"> <div class="card"> <div class="card-image">'
+        content += '<div class="col s12 m6 l6 xl3 cards-container"> <div class="card"> <div class="card-image">'
         content += '<img src="' + val[i].thumbnail + '">'
         content += '<span class="card-title">' + val[i].name + '</span>'
         content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].name).toString() + '">'
@@ -366,15 +371,19 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
 
     var val_season
 
-    let promiseReadSeason = function(){
+    let promiseReadSeason = function() {
       return new Promise(function(resolve, reject) {
         console.log('1')
         //var sql_query = 'SELECT se.name series_name, sea.id, sea.fk_series, sea.name FROM tbl_season sea INNER JOIN tbl_series se ON se.id = sea.fk_series WHERE sea.fk_series = ' + series + ' ORDER BY sea.order_number;'
         var sql_query = 'CALL select_seasons_by_series("' + series + '")'
+        console.log(sql_query)
         db.executeQuery(sql_query, function(val) {
+          val = val[0] // set val according to stored procedure response
+
           if (val !== 'undefined' && val !== null) {
             // set value of val_season --> used later to read episodes
             val_season = val
+            console.log(JSON.stringify(val_season))
             console.log('2')
 
             content += '<div class="row">'
@@ -404,56 +413,75 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
       });
     }
 
-    let promiseReadEpisode = function(){
+    function isEmptyObject(obj) {
+      return !Object.keys(obj).length;
+    }
+
+    let promiseReadEpisode = function() {
       return new Promise(function(resolve, reject) {
 
-        async.each(val_season, function(row_season, callback) {
-          //process row_season
-          //sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + row_season.id + ' ORDER BY seaepi.number';
-          sql_query = 'CALL select_episodes_by_season_and_series("' + series + '", ' + row_season.id + ')'
-          db.executeQuery(sql_query, function(val_episodes) {
+        if (isEmptyObject(val_season)) {
+          // something went wrong adding to database
+          console.log('something went wrong adding to database')
 
-            if (val_episodes !== 'undefined' && val_episodes !== null) {
+          res.send('404')
+          reject('failed')
+        } else {
+          console.log('wont throw error')
+          console.log(val_season)
+          console.log(JSON.stringify(val_season))
 
-              episode_content += '<div id="' + row_season.id + '" class="col s12">'
 
-              async.each(val_episodes, function(row_episodes, callback1) {
-                //process row_episodes
-                episode_content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
-                episode_content += '<img src="' + row_episodes.thumbnail + '">'
-                episode_content += '<span class="card-title">' + row_episodes.number + '. ' + row_episodes.name + '</span>'
-                episode_content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/stream?id=' + row_episodes.id + '">'
-                episode_content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
-                episode_content += '<p>' + row_episodes.description + '</p>'
-                episode_content += '</div> </div> </div>'
+          async.each(val_season, function(row_season, callback) {
+            //process row_season
+            //sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + row_season.id + ' ORDER BY seaepi.number';
+            sql_query = 'CALL select_episodes_by_season_and_series("' + series + '", ' + row_season.id + ')'
+            console.log('query: ' + sql_query)
+            db.executeQuery(sql_query, function(val_episodes) {
+              val_episodes = val_episodes[0] // set val according to stored procedure response
 
-                console.log('inner loop created card')
+              console.log('episodes: ' + val_episodes)
+              if (val_episodes !== 'undefined' && val_episodes !== null) {
 
-                callback1();
-              }, function(err) {
-                console.log("InnerLoopFinished");
-                callback();
-              });
+                episode_content += '<div id="' + row_season.id + '" class="col s12">'
 
-              console.log('outer loop closed season div')
-              episode_content += '</div>'
+                async.each(val_episodes, function(row_episodes, callback1) {
+                  //process row_episodes
+                  episode_content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
+                  episode_content += '<img src="' + row_episodes.thumbnail + '">'
+                  episode_content += '<span class="card-title">' + row_episodes.number + '. ' + row_episodes.name + '</span>'
+                  episode_content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/stream?id=' + row_episodes.id + '">'
+                  episode_content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+                  episode_content += '<p>' + row_episodes.description + '</p>'
+                  episode_content += '</div> </div> </div>'
 
-            }
+                  console.log('inner loop created card')
+
+                  callback1();
+                }, function(err) {
+                  console.log("InnerLoopFinished");
+                  callback();
+                });
+
+                console.log('outer loop closed season div')
+                episode_content += '</div>'
+
+              }
+            });
+          }, function(err) {
+            console.log("OuterLoopFinished");
+            console.log('Process Finished');
+
+            resolve('done')
           });
-        }, function(err) {
-          console.log("OuterLoopFinished");
-          console.log('Process Finished');
-
-          resolve('done')
-        });
-
+        }
       });
     }
 
-    promiseReadSeason().then(function(){
+    promiseReadSeason().then(function() {
       console.log('promise 1 done')
       return promiseReadEpisode()
-    }).then(function(){
+    }).then(function() {
       content = content.replace('<% episode_cards %>', episode_content)
 
       var data = {
@@ -526,11 +554,13 @@ app.get('/stream', isLoggedIn, function(req, res) {
     //var sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number, sea.name name_season, sea.production_year, ser.name name_series, ser.description desc_series, sea.order_number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE e.id = ' + episode;
     var sql_query = 'CALL select_episode_by_id(' + episode + ')'
     db.executeQuery(sql_query, function(val) {
+      val = val[0] // set val according to stored procedure response
       if (val !== 'undefined' && val !== null) {
+        var poster_resize = val[0].thumbnail.replace('SX', 'SX10')
 
         var src_info = {
           src: 'play?id=' + val[0].id,
-          poster: val[0].thumbnail,
+          poster: poster_resize,
           episode_name: val[0].name,
           episode_index: val[0].name_series + ' S' + val[0].order_number + 'E' + val[0].number,
           episode_desc: val[0].description
@@ -641,11 +671,11 @@ app.get('/omdb', function(req, res) {
   });
   */
 
-  omdb.getSeries('The 100', function(response){
+  omdb.getSeries('The 100', function(response) {
     console.log('response : ' + JSON.stringify(response))
   });
 
-  omdb.GET('t=Game Of Thrones&Season=4', function(response){
+  omdb.GET('t=Game Of Thrones&Season=4', function(response) {
     console.log('response : ' + JSON.stringify(response))
 
     res.send(response)
@@ -780,8 +810,8 @@ io.sockets.on('connection', function(socket) {
   */
 
   //Load series
-  socket.on('load series', function(series_name){
-    omdb.getSeries(series_name, function(response){
+  socket.on('load series', function(series_name) {
+    omdb.getSeries(series_name, function(response) {
       console.log('response : ' + JSON.stringify(response))
 
       socket.emit('response', JSON.stringify(response))
@@ -791,13 +821,16 @@ io.sockets.on('connection', function(socket) {
   //Join Room
   socket.on('join room', function(data) {
     var username = data.username;
+    var vendor = data.vendor;
+    var episode_name = data.episode_name;
+
     socket.join(username);
     console.log(username + ' Joined the Room ' + username);
 
     var clients = io.sockets.adapter.rooms[username].sockets
     var numClients = (typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
 
-    socket.client_name = username + "'s client " + numClients;
+    socket.client_name = username + 's client ' + numClients + ' watching "' + episode_name + '" (on ' + vendor + ' browser)';
 
     socket.emit('joined room', {
       members: numClients
@@ -826,16 +859,22 @@ io.sockets.on('connection', function(socket) {
   socket.on('pause videos', function(data) {
     var room_name = data.room_name;
 
-    //Loop trough Clients connected with room
-    var clients = io.sockets.adapter.rooms[room_name].sockets;
-    for (var clientId in clients) {
-      var clientSocket = io.sockets.connected[clientId];
+    // Check If io is defined
+    if (typeof io.sockets.adapter.rooms[room_name] !== 'undefined') {
+      //Loop trough Clients connected with room
+      console.log(typeof io.sockets.adapter.rooms[room_name])
+      var clients = io.sockets.adapter.rooms[room_name].sockets;
+      for (var clientId in clients) {
+        var clientSocket = io.sockets.connected[clientId];
 
-      io.to(room_name).emit('pause', {
-        time: data
-      });
+        io.to(room_name).emit('pause', {
+          time: data
+        });
+      }
+      console.log('Videos paused!');
+    } else {
+      console.log('there is no room opened in your account!')
     }
-    console.log('Videos paused!');
   });
 
   //Play Video Command
@@ -865,14 +904,32 @@ io.sockets.on('connection', function(socket) {
     console.log('Sent 10 Backward!');
   });
 
+  //Mute
+  socket.on('mute', function(data) {
+    //Mute All Browsers
+    io.sockets.emit('activate mute', {
+      time: data
+    });
+    console.log('activated mute');
+  });
+
+  //Unmute
+  socket.on('unmute', function(data) {
+    //Unmute All Browsers
+    io.sockets.emit('activate unmute', {
+      time: data
+    });
+    console.log('activated unmute');
+  });
+
   //Sync
   socket.on('get watchtime', function(data) {
     console.log('Wants watchtime. Recieved ' + data)
 
     //Read Watchtime from DB
-    var sql_query = 'SELECT watch_time FROM tbl_watchlist WHERE fk_user = ' + data.user + ' and fk_episode = ' + data.episode + ';';
-    var sql_query = 'CALL select_watchtime_by_user_and_episode(' + data.episode + ', ' + data.username + ')'
+    var sql_query = 'CALL select_watchtime_by_user_and_episode(' + data.episode + ', "' + data.username + '")'
     db.executeQuery(sql_query, function(val) {
+      val = val[0] //set value according to stored procedure response
       if (val.length === 0) {
         //No Entry in DB --> WatchTime 0
         socket.emit('set watchtime', {
@@ -895,23 +952,9 @@ io.sockets.on('connection', function(socket) {
       console.log('Empty');
     } else {
       //Insert DB
-      var sql_query = 'SELECT COUNT(id) entry_count FROM tbl_watchlist WHERE fk_user = ' + data.user + ' and fk_episode = ' + data.episode + ';';
+      var sql_query = 'CALL insert_update_watchtime(' + data.episode + ', "' + data.username + '", "1", "' + data.curr_time + '")'
       db.executeQuery(sql_query, function(val) {
-        if (val[0].entry_count > 0) {
-          //UPDATE
-          console.log('Updating, already exists.');
-          sql_query = 'UPDATE tbl_watchlist SET watch_time = ' + data.curr_time + ', last_watched = CURRENT_TIMESTAMP WHERE fk_user = ' + data.user + ' and fk_episode = ' + data.episode + ';';
-          db.executeQuery(sql_query, function(val) {
-            //val = db info
-          });
-        } else {
-          //INSERT
-          console.log('Inserting, doesnt exist.');
-          sql_query = 'INSERT INTO tbl_watchlist(fk_episode, fk_user, plays_count, watch_time) VALUES(' + data.episode + ',' + data.user + ', 0,' + data.curr_time + ');';
-          db.executeQuery(sql_query, function(val) {
-            //val = db info
-          });
-        }
+        //value changed
       });
     }
   });

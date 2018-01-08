@@ -39,6 +39,8 @@ exports.getSeries = function(title, callback) {
       var poster = response.Poster.replace(/sx[0-9]*/i, "SX600"); // change resolution of poster
       var sql_query = 'CALL insert_series("' + response.Title + '", "' + response.Plot + '", "' + response.Genre + '", "' + poster + '")'
       db.executeQuery(sql_query, function(val) {
+        val = val[0]
+
         console.log('series inserted with id ' + val[0].last_id)
       });
 
@@ -74,6 +76,8 @@ exports.getSeries = function(title, callback) {
               // Insert Season Into DATABASE call insert_season('Game Of Thrones', 'Season 2', 2)
               var sql_query = 'CALL insert_season("' + title + '", "Season ' + row_season.toString() + '", ' + row_season + ')'
               db.executeQuery(sql_query, function(val) {
+                val = val[0]
+
                 console.log('season inserted with id ' + val[0].last_id)
               });
 
@@ -94,8 +98,10 @@ exports.getSeries = function(title, callback) {
 
                   // Insert Episode Into Database
                   var poster = row_episode_data.Poster.replace(/sx[0-9]*/i, "SX500"); // change resolution of poster
-                  var sql_query2 = 'CALL insert_episode("' + row_episode_data.Title + '", "' + poster + '", "' + 'http://link.com/video' + '", "' + row_episode_data.Plot + '", "' + row_episode_data.Released + '", ' + row_episode_data.Year + ', "' + row_episode_data.Country + '","' + row_episode_data.Language + '")'
+                  var sql_query2 = 'CALL insert_episode("' + row_episode_data.Title + '", "' + poster + '", "' + 'http://link.com/video' + '", "' + db.escape(row_episode_data.Plot) + '", "' + row_episode_data.Released + '", ' + row_episode_data.Year + ', "' + row_episode_data.Country + '","' + row_episode_data.Language + '")'
                   db.executeQuery(sql_query2, function(val) {
+                    val = val[0]
+
                     var episode_insert_id = val[0].last_id
                     var season_number = row_season
                     console.log('episode inserted with id ' + episode_insert_id)
@@ -103,8 +109,9 @@ exports.getSeries = function(title, callback) {
 
                     //Insert Episode-Season Into Database
                     var sql_query3 = 'CALL insert_season_episode(' + episode_insert_id + ', "' + title + '", ' + season_number + ', ' + row_episode_data.Episode + ')'
+                    console.log('executing query which throws error: ' + sql_query3)
                     db.executeQuery(sql_query3, function(val_episode_season_insert) {
-                      var episode_season_insert_id = val_episode_season_insert[0].last_id
+                      var episode_season_insert_id = val_episode_season_insert[0][0].last_id
                       console.log('episode inserted with id ' + episode_insert_id)
                     });
                   });

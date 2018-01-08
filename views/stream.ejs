@@ -38,7 +38,7 @@
               var stream_info = {
                 curr_time: vid.currentTime,
                 episode: stream_id,
-                user: <%= session.userid %>
+                username: '<%= session.username %>'
               };
               socket.emit('send watchtime', stream_info);
               console.log('Sent.');
@@ -48,7 +48,11 @@
           }, 5000);
 
           //Join the Account Room when loading site
-          socket.emit('join room', {username: '<%= session.username %>'});
+          socket.emit('join room', {
+            username: '<%= session.username %>',
+            vendor: navigator.vendor,
+            episode_name: '<%= src_info.episode_name %>'
+          });
 
           socket.on('joined room', function(data){
             console.log('Users in Room: ' + data.members);
@@ -76,12 +80,21 @@
             console.log('Skipped 10 Backward.');
           });
 
+          //Mute
+          socket.on('activate mute', function(data){
+            vid.muted = true;
+            console.log('Muted.');
+          });
+          socket.on('activate unmute', function(data){
+            vid.muted = false;
+            console.log('Unmuted.');
+          });
+
           //Sync watchtime
           socket.on('set watchtime', function(data){
             vid.currentTime = data.watch_time;
             console.log('Synced watch_time to ' + data.watch_time);
           });
-
 
           $('video').on('play', function (e) {
             //When play button gets clicked sync time
@@ -89,7 +102,7 @@
               socket.emit('get watchtime', {
                 curr_time: vid.currentTime,
                 episode: stream_id,
-                user: <%= session.userid %>
+                username: '<%= session.username %>'
               });
             }
           });

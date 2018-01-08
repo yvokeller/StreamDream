@@ -26,7 +26,7 @@ INNER JOIN tbl_season sea ON se.fk_season = sea.id
 INNER JOIN tbl_series s ON s.id = sea.fk_series
 WHERE w.fk_user = (SELECT u.id from tbl_user u where u.username = d_username)
 ORDER BY w.last_watched desc
-LIMIT 5;
+LIMIT 4;
 
 END$$
 

@@ -32,5 +32,6 @@ con.query('USE stream_dream5;', function (err, result) {
 
 module.exports = {
   con: con,
-  executeQuery: executeQuery
+  executeQuery: executeQuery,
+  escape: mysql.escape
 };

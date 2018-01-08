@@ -3,40 +3,41 @@
 
   <body>
     <% include partials/navigation.ejs %>
-    <div class='container'>
-      <nav>
-        <div class="nav-wrapper">
-          <div class="col s12">
-            <a href="#!" class="breadcrumb">First</a>
-            <a href="#!" class="breadcrumb">Second</a>
-            <a href="#!" class="breadcrumb">Third</a>
-          </div>
+
+      <div class='container'>
+
+        <h1>Library.</h1>
+
+        <div class="section">
+          <% if(recent && recent !== 'undefined' && recent !== null){ %>
+            <h4>Recently Watched</h4>
+            <%- recent %>
+              <% } %>
         </div>
-      </nav>
 
-      <h1>Library.</h1>
+        <div class="divider"></div>
+        <br>
 
-      <div class="section">
-        <% if(recent && recent !== 'undefined' && recent !== null){ %>
-        <h4>Recently Watched</h4>
-        <%- recent %>
-        <% } %>
+        <div class="section">
+          <h4>Series</h4>
+
+          <div class="row">
+            <div class="input-field col s12">
+              <i class="material-icons right">search</i>
+              <input id="search" name="search" type="text" class="validate" required>
+              <label for="username">Search For Series</label>
+            </div>
+          </div>
+
+          <%- series %>
+        </div>
+
+        <div class="divider"></div>
+        <br> Series missing? Simply request it.
+        <br>
+        <br>
       </div>
-
-      <div class="divider"></div>
-      <br>
-
-      <div class="section">
-        <h4>Series</h4>
-        <%- series %>
-      </div>
-
-      <div class="divider"></div>
-      <br>
-      Series missing? Simply request it.
-      <br>
-      <br>
-    </div>
 
   </body>
+
 </html>

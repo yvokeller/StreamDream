@@ -24,6 +24,17 @@
         <i class="material-icons">forward_10</i>
       </button>
 
+      <br>
+      <br>
+
+      <button id="btnMute" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">volume_off</i>
+      </button>
+
+      <button id="btnUnmute" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">volume_down</i>
+      </button>
+
       <h4>Connected Devices</h4>
       <%- conn %>
 
@@ -45,6 +56,8 @@
         var $play = $('#btnPlay');
         var $10forward = $('#btn10Forward');
         var $10backward = $('#btn10Backward');
+        var $mute = $('#btnMute');
+        var $unmute = $('#btnUnmute');
 
         //Play
         $play.click(function(e){
@@ -68,6 +81,18 @@
         $10backward.click(function(e){
           console.log('Remote Backward 10 button clicked!');
           socket.emit('backward 10', 0);
+        });
+
+        //Mute
+        $mute.click(function(e){
+          console.log('Remote Mute!');
+          socket.emit('mute', 0);
+        });
+
+        //Unmute
+        $unmute.click(function(e){
+          console.log('Remote Unmute!');
+          socket.emit('unmute', 0);
         });
 
       });
