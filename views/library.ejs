@@ -41,9 +41,8 @@
       </div>
 
       <script>
-
+        var socket = io.connect();
         $(function(){
-          var socket = io.connect();
 
           var $search = $('#search');
           var $series_content = $('#series_content');
@@ -65,6 +64,20 @@
           })
 
         })
+
+        // Send Air Play Command to server when icon is clicked
+        function airPlay(id){
+          console.log('air play called with id ' + id)
+          socket.emit('send air play', {
+            id: id,
+            room_name: '<%= username %>'
+          })
+        }
+
+        // Show Toast on Response
+        socket.on('toast response', function(data){
+          Materialize.toast(data.msg, 4000);
+        });
 
       </script>
 

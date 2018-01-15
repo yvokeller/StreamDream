@@ -26,8 +26,9 @@ INSERT INTO tbl_series (name, description, genre, thumbnail)
     WHERE NOT EXISTS
       (SELECT name FROM tbl_series
         WHERE name = d_name);
+  SET @inserted_id = (SELECT id FROM tbl_series WHERE name = d_name);
   SET @last_id = LAST_INSERT_ID();
-  SELECT @last_id AS last_id;
+  SELECT @last_id AS last_id, @inserted_id AS inserted_id;
 END$$
 
-DELIMITER;
+DELIMITER ;

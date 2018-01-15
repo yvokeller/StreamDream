@@ -2,6 +2,7 @@
 <% include partials/head.ejs %>
 <body>
     <% include partials/navigation.ejs %>
+
     <div class='container'>
       <h1>Remote.</h1>
 
@@ -94,7 +95,6 @@
           console.log('Remote Unmute!');
           socket.emit('unmute', 0);
         });
-
       });
     </script>
   </body>

@@ -90,6 +90,11 @@
             console.log('Unmuted.');
           });
 
+          //Switch Stream
+          socket.on('air play', function(data){
+            window.location.replace(data.redirect)
+          });
+
           //Sync watchtime
           socket.on('set watchtime', function(data){
             vid.currentTime = data.watch_time;

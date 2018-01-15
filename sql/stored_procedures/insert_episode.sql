@@ -35,4 +35,4 @@ INSERT INTO tbl_episode (name, thumbnail, src, description, released, year, coun
   SELECT @last_id AS last_id;
 END$$
 
-DELIMITER;
+DELIMITER ;

@@ -22,4 +22,4 @@ SELECT e.src FROM tbl_episode e WHERE id = d_id_episode;
 
 END$$
 
-DELIMITER;
+DELIMITER ;

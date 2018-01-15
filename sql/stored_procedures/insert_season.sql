@@ -30,4 +30,4 @@ INSERT INTO tbl_season (fk_series, name, order_number)
   SELECT @last_id AS last_id;
 END$$
 
-DELIMITER;
+DELIMITER ;

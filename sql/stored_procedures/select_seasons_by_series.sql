@@ -26,4 +26,4 @@ ORDER BY sea.order_number;
 
 END$$
 
-DELIMITER;
+DELIMITER ;

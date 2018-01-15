@@ -32,4 +32,4 @@ INSERT INTO tbl_season_episode (fk_episode, fk_season, number)
   SELECT @last_id AS last_id;
 END$$
 
-DELIMITER;
+DELIMITER ;

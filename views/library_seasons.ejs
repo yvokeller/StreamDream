@@ -22,6 +22,23 @@
         $(document).ready(function(){
           $('ul.tabs').tabs();
         });
+
+        var socket = io.connect();
+
+        // Send Air Play Command to server when icon is clicked
+        function airPlay(id){
+          console.log('air play called with id ' + id)
+          socket.emit('send air play', {
+            id: id,
+            room_name: '<%= data.username %>'
+          })
+        }
+
+        // Show Toast on Response
+        socket.on('toast response', function(data){
+          Materialize.toast(data.msg, 4000);
+        });
+
       </script>
 
     </div>

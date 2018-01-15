@@ -29,4 +29,4 @@ ORDER BY seaepi.number;
 
 END$$
 
-DELIMITER;
+DELIMITER ;

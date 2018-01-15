@@ -35,4 +35,4 @@ AND fk_episode = d_fk_episode;
 
 END$$
 
-DELIMITER;
+DELIMITER ;

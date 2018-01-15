@@ -11,6 +11,8 @@ function executeQuery(sql, callback){
       if (err){
         if (err.code === 'ER_DUP_ENTRY') {
           console.log('Entry already exists! UNIQUE_KEY');
+        /*} else if(err.code === 'ER_NO_REFERENCED_ROW_2') {
+          console.log('Insert Error occured')*/
         } else {
           throw err;
         }

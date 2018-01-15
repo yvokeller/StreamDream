@@ -45,6 +45,11 @@ function validateEmail(email) {
   return re.test(email)
 }
 
+//Check if Object has contents
+function isEmptyObject(obj) {
+  return !Object.keys(obj).length;
+}
+
 //Function to Check if User is logged in
 function isLoggedIn(req, res, next) {
   if (req.session.authenticated === true) {
@@ -85,9 +90,9 @@ app.get('/remote', isLoggedIn, function(req, res) {
 
     //Loop Trough Room Members
     var numClients = (typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
-    var content = '';
 
-    content += '<ul class="collapsible" data-collapsible="accordion">'
+    var content = '';
+    content += '<ul class="collapsible popout" data-collapsible="accordion">'
 
     for (var clientId in clients) {
       var clientSocket = io.sockets.connected[clientId];
@@ -172,7 +177,6 @@ app.post('/register', urlencodedParser, function(req, res) {
   //Wenn Status = True
   if (state == true) {
     //Try to Register User
-    //var sql_query = 'INSERT INTO tbl_user(username, password) VALUES("' + username + '","' + hash + '")';
     var sql_query = 'CALL insert_user("' + username + '", "' + hash + '", "' + email + '")'
 
     db.executeQuery(sql_query, function(val) {
@@ -298,7 +302,8 @@ app.get('/logout', function(req, res) {
 
 app.get('/library', isLoggedIn, function(req, res) {
   //MAIN PAGE
-  var sql_query = 'SELECT * FROM tbl_series ORDER BY name';
+  var sess = req.session;
+  var sql_query = 'SELECT name, description, genre, thumbnail FROM select_all_series';
   db.executeQuery(sql_query, function(val) {
     // get all aviable series
     if (val !== 'undefined' && val !== null) {
@@ -311,7 +316,7 @@ app.get('/library', isLoggedIn, function(req, res) {
         content += '<span class="card-title">' + val[i].name + '</span>'
         content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].name).toString() + '">'
         content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
-        content += '<p>' + val[i].description + '</p>'
+        content += '<p><b>' + val[i].genre + '</b><br>' + val[i].description + '</p>'
         content += '</div> </div> </div>'
       }
       content += '</div>'
@@ -320,7 +325,6 @@ app.get('/library', isLoggedIn, function(req, res) {
 
       //Get RECENTLY WATCHED
       var sess = req.session;
-      //sql_query = "SELECT w.last_watched, e.id, e.name, e.description, se.number, sea.order_number, e.thumbnail, s.name name_series FROM tbl_watchlist w inner join tbl_episode e on e.id =  w.fk_episode inner join tbl_season_episode se on se.fk_episode = e.id inner join tbl_series s on s.id = se.fk_season inner join tbl_season sea on se.fk_season = sea.id where w.fk_user = " + sess.userid + " order by w.last_watched desc";
       sql_query = 'CALL select_recently_watched_by_username("' + sess.username + '")'
       console.log('query: ' + sql_query)
       db.executeQuery(sql_query, function(val_watchlist) {
@@ -334,8 +338,14 @@ app.get('/library', isLoggedIn, function(req, res) {
             content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
             content += '<img class="activator" src="' + data_row[i].thumbnail + '">'
             content += '<span class="card-title">' + data_row[i].name + '</span>'
-            content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="stream?id=' + (data_row[i].id).toString() + '">'
-            content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+
+            content += '<a class="btn-floating right halfway-fab waves-effect waves-light red" href="stream?id=' + (data_row[i].id).toString() + '">'
+            content += '<i class="material-icons">play_arrow</i></a>'
+
+            content += '<a class="btn-floating left halfway-fab waves-effect waves-light blue" onclick="airPlay(' + data_row[i].id + '); return false;">'
+            content += '<i class="material-icons">airplay</i></a>'
+
+            content += '</div> <div class="card-content">'
             content += '<p>' + data_row[i].name_series + ' S' + data_row[i].order_number + 'E' + data_row[i].number + '</p>'
             content += '<div class="card-reveal"> <span class="card-title grey-text text-darken-4">' + data_row[i].name + ' - ' + data_row[i].name_series + ' S' + data_row[i].order_number + 'E' + data_row[i].number
             content += '<i class="material-icons right">close</i></span><p>' + data_row[i].description + '</p></div>'
@@ -349,7 +359,8 @@ app.get('/library', isLoggedIn, function(req, res) {
         //Render Page
         res.render('library', {
           series: series,
-          recent: recent
+          recent: recent,
+          username: sess.username
         });
 
       });
@@ -362,6 +373,7 @@ app.get('/library', isLoggedIn, function(req, res) {
 
 app.get('/library/:series_name', isLoggedIn, function(req, res) {
   // define query strings
+  var sess = req.session;
   var series = decodeURI(querystring.escape(req.params.series_name));
   console.log('selected series: ' + series)
 
@@ -373,14 +385,12 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
 
     let promiseReadSeason = function() {
       return new Promise(function(resolve, reject) {
-        console.log('1')
-        //var sql_query = 'SELECT se.name series_name, sea.id, sea.fk_series, sea.name FROM tbl_season sea INNER JOIN tbl_series se ON se.id = sea.fk_series WHERE sea.fk_series = ' + series + ' ORDER BY sea.order_number;'
         var sql_query = 'CALL select_seasons_by_series("' + series + '")'
-        console.log(sql_query)
+        console.log('1')
         db.executeQuery(sql_query, function(val) {
           val = val[0] // set val according to stored procedure response
 
-          if (val !== 'undefined' && val !== null) {
+          if (val !== 'undefined' && val !== null & isEmptyObject(val) !== true) {
             // set value of val_season --> used later to read episodes
             val_season = val
             console.log(JSON.stringify(val_season))
@@ -413,10 +423,6 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
       });
     }
 
-    function isEmptyObject(obj) {
-      return !Object.keys(obj).length;
-    }
-
     let promiseReadEpisode = function() {
       return new Promise(function(resolve, reject) {
 
@@ -434,7 +440,6 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
 
           async.each(val_season, function(row_season, callback) {
             //process row_season
-            //sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + row_season.id + ' ORDER BY seaepi.number';
             sql_query = 'CALL select_episodes_by_season_and_series("' + series + '", ' + row_season.id + ')'
             console.log('query: ' + sql_query)
             db.executeQuery(sql_query, function(val_episodes) {
@@ -450,8 +455,15 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
                   episode_content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
                   episode_content += '<img src="' + row_episodes.thumbnail + '">'
                   episode_content += '<span class="card-title">' + row_episodes.number + '. ' + row_episodes.name + '</span>'
-                  episode_content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/stream?id=' + row_episodes.id + '">'
-                  episode_content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+
+                  episode_content += '<a class="btn-floating right halfway-fab waves-effect waves-light red" href="/stream?id=' + row_episodes.id + '">'
+                  episode_content += '<i class="material-icons">play_arrow</i></a>'
+
+                  episode_content += '<a class="btn-floating left halfway-fab waves-effect waves-light blue" '
+                  episode_content += 'onclick="airPlay(' + row_episodes.id + '); return false;">'
+                  episode_content += '<i class="material-icons">airplay</i></a>'
+
+                  episode_content += '</div> <div class="card-content">'
                   episode_content += '<p>' + row_episodes.description + '</p>'
                   episode_content += '</div> </div> </div>'
 
@@ -486,7 +498,8 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
 
       var data = {
         series_name: val_season[0].series_name,
-        seasons: content
+        seasons: content,
+        username: sess.username
       }
 
       res.render('library_seasons', {
@@ -497,61 +510,27 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
 });
 
 app.get('/admin', isLoggedIn, function(req, res) {
-  res.render('admin')
+  res.render('admin', {
+    response: ''
+  })
 });
 
-/*
-app.get('/library/:id/:season', isLoggedIn, function(req, res) {
-  var series = querystring.escape(req.params.id);
-  var season = querystring.escape(req.params.season);
+app.get('/admin/:id', isLoggedIn, function(req, res) {
+  var imdb_id = querystring.escape(req.params.id);
 
-  if (season !== 'undefined' && season !== null && series !== 'undefined' && series !== null) {
-    var sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE ser.id = ' + series + ' AND sea.id = ' + season + ' ORDER BY seaepi.number';
+  omdb.getSeries(imdb_id, function(response) {
+    console.log('response : ' + JSON.stringify(response))
 
-    db.executeQuery(sql_query, function(val) {
-      if (val !== 'undefined' && val !== null) {
-        var content = '<div class="table-responsive"><table>';
-        content += '<tr><th></th></tr>';
-
-        console.log(val.length);
-
-        for (var i = 0; i < val.length; i++) {
-          content += '<tr>';
-
-          content += '<td>';
-          content += '<h2>' + val[i].number + '. ' + val[i].name + '</h2>';
-          content += '<a href="/stream?id=' + val[i].id + '">';
-          content += '<img src="/data/thumbnails/' + val[i].thumbnail + '" width="auto" class="img-responsive">';
-          content += '</a>';
-          content += '</td>';
-
-          content += '</tr>';
-        }
-
-        content += '</table></div>';
-
-        var series = content;
-        res.render('library', {
-          series: series,
-          recent: undefined
-        });
-      } else {
-        res.status(404);
-        res.render('404');
-      }
-    });
-  } else {
-    res.status(404);
-    res.render('404');
-  }
+    res.render('admin', {
+      response: response
+    })
+  });
 });
-*/
 
 app.get('/stream', isLoggedIn, function(req, res) {
   var sess = req.session;
   var episode = querystring.escape(req.query.id);
   if (episode !== 'undefined' && episode !== null) {
-    //var sql_query = 'SELECT e.id, e.name, e.description, e.thumbnail, e.src, seaepi.number, sea.name name_season, sea.production_year, ser.name name_series, ser.description desc_series, sea.order_number FROM tbl_episode e INNER JOIN tbl_season_episode seaepi ON e.id = seaepi.fk_episode INNER JOIN tbl_season sea ON seaepi.fk_season = sea.id INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE e.id = ' + episode;
     var sql_query = 'CALL select_episode_by_id(' + episode + ')'
     db.executeQuery(sql_query, function(val) {
       val = val[0] // set val according to stored procedure response
@@ -604,9 +583,9 @@ app.get('/stream', isLoggedIn, function(req, res) {
 
 app.get('/play', isLoggedIn, function(req, res) {
   var episode = querystring.escape(req.query.id);
-  var sql_query = 'SELECT e.src FROM tbl_episode e WHERE id = ' + episode;
-
+  var sql_query = 'CALL select_src_by_id(' + episode + ')';
   db.executeQuery(sql_query, function(val) {
+    val = val[0] // set val according to stored procedure response
     if (val !== 'undefined' && val !== null) {
       //FOUND SOMETHING --> Stream
       var file = path.resolve(__dirname + "/data/movies/" + val[0].src);
@@ -809,12 +788,45 @@ io.sockets.on('connection', function(socket) {
   //###############
   */
 
+  //Find series
+  socket.on('find series', function(series_name) {
+    series_name = querystring.escape(series_name)
+    console.log('escaped input: ' + series_name)
+    omdb.findSeries(series_name, function(response) {
+      if (response.Response == 'False') {
+        socket.emit('find series response', '<h5>Results</h5>Series not found in OMDB.')
+      } else {
+        console.log('response : ' + JSON.stringify(response))
+        response = response.Search
+
+        var collection = '<h5>Results</h5>'
+        collection += '<ul class="collection">'
+
+        for (var i = 0; i < response.length; i++) {
+          collection += '<li class="collection-item avatar">'
+
+          collection += '<img src="' + response[i].Poster + '" alt="" class="circle">'
+          collection += '<span class="title">' + response[i].Title + '</span>'
+          collection += '<p><b>Type:</b> ' + response[i].Type + ' <b>Year:</b> ' + response[i].Year + '</p>'
+          collection += '<a href="/admin/' + response[i].imdbID + '" class="secondary-content"><i class="material-icons">arrow_downward</i></a>'
+
+          collection += '</li>'
+        }
+        collection += '</ul>'
+
+        console.log('collection string: ' + collection)
+
+        socket.emit('find series response', collection)
+      }
+    });
+  });
+
   //Load series
   socket.on('load series', function(series_name) {
     omdb.getSeries(series_name, function(response) {
       console.log('response : ' + JSON.stringify(response))
 
-      socket.emit('response', JSON.stringify(response))
+      socket.emit('load series response', JSON.stringify(response))
     });
   });
 
@@ -854,6 +866,46 @@ io.sockets.on('connection', function(socket) {
       });
     }
   });
+
+  socket.on('send air play', function(data) {
+    //Check If User Wants to airplay
+    var id = querystring.escape(data.id);
+    var room_name = data.room_name;
+    var response;
+
+    console.log('send air play called with id ' + id)
+
+    if(id !== 'undefined'){
+      // Check If io is defined
+      if (typeof io.sockets.adapter.rooms[room_name] !== 'undefined') {
+        //Loop trough Clients connected with room
+        console.log(typeof io.sockets.adapter.rooms[room_name])
+        var clients = io.sockets.adapter.rooms[room_name].sockets;
+        for (var clientId in clients) {
+          var clientSocket = io.sockets.connected[clientId];
+
+          // send redirect
+          io.to(room_name).emit('air play', {
+            redirect: '/stream?id=' + id
+          });
+
+        }
+        response = 'Successfully redirected currently streaming clients.'
+        console.log('Air Play redirect executed!');
+
+        socket.emit('toast response', {
+          msg: response
+        })
+      } else {
+        response = 'Streaming redirect failed. There is no device streaming at the moment.'
+        console.log('there is no room opened in your account!')
+
+        socket.emit('toast response', {
+          msg: response
+        })
+      }
+    }
+  })
 
   //Stop Video Command
   socket.on('pause videos', function(data) {
@@ -961,10 +1013,10 @@ io.sockets.on('connection', function(socket) {
 
   //Search For Series
   socket.on('search series', function(data) {
-    //Unmute All Browsers
     console.log('recieved search request');
+    var search_input = querystring.escape(data.search)
 
-    var sql_query = 'SELECT * FROM tbl_series WHERE name LIKE "%' + data.search + '%"';
+    var sql_query = 'SELECT name, description, genre, thumbnail FROM tbl_series WHERE name LIKE "%' + search_input + '%"';
     console.log('query: ' + sql_query)
     db.executeQuery(sql_query, function(val) {
       // get all aviable series
@@ -978,7 +1030,7 @@ io.sockets.on('connection', function(socket) {
           content += '<span class="card-title">' + val[i].name + '</span>'
           content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].name).toString() + '">'
           content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
-          content += '<p>' + val[i].description + '</p>'
+          content += '<p><b>' + val[i].genre + '</b><br>' + val[i].description + '</p>'
           content += '</div> </div> </div>'
         }
         content += '</div>'

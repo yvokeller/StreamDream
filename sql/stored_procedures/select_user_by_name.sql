@@ -22,4 +22,4 @@ SELECT * FROM tbl_user
   WHERE username = d_username;
 END$$
 
-DELIMITER;
+DELIMITER ;

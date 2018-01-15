@@ -12,7 +12,6 @@ const connection = hostname + '?apikey=' + apikey + '&'
 //var db = require('./db_odbc.js');
 var db = require('./db.js');
 
-
 exports.GET = function(route, callback) {
   const xhr = new XMLHttpRequest();
   xhr.open("GET", connection + route, true);
@@ -24,14 +23,31 @@ exports.GET = function(route, callback) {
   xhr.send()
 };
 
-exports.getSeries = function(title, callback) {
-  // Search for Series
-  var route = 't=' + title
+exports.findSeries = function(title, callback) {
+  var route = 's=' + title + '&type=series'
+
+  GET(route, function(response) {
+    if (response.Response == 'False') {
+      console.log('Series not found in OMDB. Empty result set.')
+      callback(response)
+    } else {
+      callback(response)
+    }
+  })
+}
+
+exports.getSeries = function(imdb_id, callback) {
+  // Get Series by their imdb id
+  var route = 'i=' + imdb_id
 
   GET(route, function(response) {
     if (response.Response == 'False') {
       console.log('Series not found in OMDB. ' + JSON.stringify(response))
+
+      callback('<h5>Not Found</h5>Series with ID <b>' + imdb_id + '</b> not found in OMDB. Empty result set.')
     } else {
+      var title = response.Title
+
       console.log('response: ' + JSON.stringify(response))
       console.log('Total Seasons: ' + response.totalSeasons)
 
@@ -40,6 +56,8 @@ exports.getSeries = function(title, callback) {
       var sql_query = 'CALL insert_series("' + response.Title + '", "' + response.Plot + '", "' + response.Genre + '", "' + poster + '")'
       db.executeQuery(sql_query, function(val) {
         val = val[0]
+
+        console.log(JSON.stringify(val))
 
         console.log('series inserted with id ' + val[0].last_id)
       });
@@ -90,7 +108,7 @@ exports.getSeries = function(title, callback) {
 
                 content += 'Episode ' + row_episode.Episode + ' ' + row_episode.Title
 
-                var route_episode = route_season + '&Episode=' + row_episode.Episode
+                var route_episode = route_season + '&Episode=' + row_episode.Episode + '&plot=full'
                 console.log('getting episode data with route ' + route_episode)
                 GET(route_episode, function(response_episode_data) {
                   var row_episode_data = response_episode_data
@@ -98,7 +116,7 @@ exports.getSeries = function(title, callback) {
 
                   // Insert Episode Into Database
                   var poster = row_episode_data.Poster.replace(/sx[0-9]*/i, "SX500"); // change resolution of poster
-                  var sql_query2 = 'CALL insert_episode("' + row_episode_data.Title + '", "' + poster + '", "' + 'http://link.com/video' + '", "' + db.escape(row_episode_data.Plot) + '", "' + row_episode_data.Released + '", ' + row_episode_data.Year + ', "' + row_episode_data.Country + '","' + row_episode_data.Language + '")'
+                  var sql_query2 = 'CALL insert_episode("' + row_episode_data.Title + '", "' + poster + '", "' + 'http://link.com/video' + '", "' + row_episode_data.Plot + '", "' + row_episode_data.Released + '", ' + row_episode_data.Year + ', "' + row_episode_data.Country + '","' + row_episode_data.Language + '")'
                   db.executeQuery(sql_query2, function(val) {
                     val = val[0]
 
@@ -108,12 +126,14 @@ exports.getSeries = function(title, callback) {
                     console.log('known season: ' + row_season + ' / known series: ' + title + ' / episode number: ' + row_episode_data.Episode)
 
                     //Insert Episode-Season Into Database
-                    var sql_query3 = 'CALL insert_season_episode(' + episode_insert_id + ', "' + title + '", ' + season_number + ', ' + row_episode_data.Episode + ')'
-                    console.log('executing query which throws error: ' + sql_query3)
-                    db.executeQuery(sql_query3, function(val_episode_season_insert) {
-                      var episode_season_insert_id = val_episode_season_insert[0][0].last_id
-                      console.log('episode inserted with id ' + episode_insert_id)
-                    });
+                    if(episode_insert_id !== 0){
+                      var sql_query3 = 'CALL insert_season_episode(' + episode_insert_id + ', "' + title + '", ' + season_number + ', ' + row_episode_data.Episode + ')'
+                      console.log('executing query which throws error: ' + sql_query3)
+                      db.executeQuery(sql_query3, function(val_episode_season_insert) {
+                        var episode_season_insert_id = val_episode_season_insert[0][0].last_id
+                        console.log('episode inserted with id ' + episode_insert_id)
+                      });
+                    }
                   });
 
 
@@ -145,7 +165,7 @@ exports.getSeries = function(title, callback) {
         return promiseReadSeasonEpisodes()
       }).then(function(content) {
 
-        callback(content)
+        callback('<h5>Success</h5>Series <b>' + title + '</b> successfully added to the StreamDream library.')
       });
     }
 
@@ -179,7 +199,20 @@ function GET(route, callback) {
   xhr.open("GET", connection + route, true);
 
   xhr.addEventListener("load", () => {
-    callback(JSON.parse(xhr.responseText, xhr))
+    //Check if response contains html tag --> if yes, invalid response.
+
+    /*if(xhr.responseText.indexOf('<!DOCTYPE html>') == -1 || xhr.responseText.indexOf('<!DOCTYPE HTML>') == -1){
+      callback(JSON.parse(xhr.responseText, xhr))
+    } else {
+      console.log('Invalid response from OMDB Server.')
+    }
+    */
+
+    try {
+      callback(JSON.parse(xhr.responseText, xhr))
+    } catch(err) {
+      console.log('ERR OCCURED: ' + err.message);
+    }
   })
 
   xhr.send()

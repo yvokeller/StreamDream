@@ -27,4 +27,6 @@ WHERE e.id = d_id_episode;
 
 END$$
 
-DELIMITER;
+DELIMITER ;
+
+start here to top!

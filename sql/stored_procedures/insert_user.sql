@@ -30,4 +30,4 @@ INSERT INTO tbl_user (username, password, email)
   SELECT @last_id AS last_id;
 END$$
 
-DELIMITER;
+DELIMITER ;

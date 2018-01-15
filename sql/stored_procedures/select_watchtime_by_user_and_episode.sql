@@ -26,4 +26,4 @@ AND fk_user = (SELECT id FROM tbl_user WHERE username = d_username);
 
 END$$
 
-DELIMITER;
+DELIMITER ;
