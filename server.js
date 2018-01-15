@@ -315,7 +315,7 @@ app.get('/library', isLoggedIn, function(req, res) {
         content += '<img src="' + val[i].thumbnail + '">'
         content += '<span class="card-title">' + val[i].name + '</span>'
         content += '<a class="btn-floating halfway-fab waves-effect waves-light red" href="/library/' + (val[i].name).toString() + '">'
-        content += '<i class="material-icons">play_arrow</i></a> </div> <div class="card-content">'
+        content += '<i class="material-icons">playlist_play</i></a> </div> <div class="card-content">'
         content += '<p><b>' + val[i].genre + '</b><br>' + val[i].description + '</p>'
         content += '</div> </div> </div>'
       }

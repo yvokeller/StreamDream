@@ -4,83 +4,80 @@
   <body>
     <% include partials/navigation.ejs %>
 
-      <div class='container'>
+    <div class='container'>
+      <h1>Library.</h1>
 
-        <h1>Library.</h1>
-
-        <div class="section">
-          <% if(recent && recent !== 'undefined' && recent !== null){ %>
-            <h4>Recently Watched</h4>
-            <%- recent %>
-              <% } %>
-        </div>
-
-        <div class="divider"></div>
-        <br>
-
-        <div class="section">
-          <h4>Series</h4>
-
-          <div class="row">
-            <div class="input-field col s12">
-              <i class="material-icons right">search</i>
-              <input id="search" name="search" type="text" class="validate" required>
-              <label for="search">Search For Series</label>
-            </div>
-          </div>
-
-          <div id="series_content" name="series_content">
-            <%- series %>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-        <br> Series missing? Simply request it.
-        <br>
-        <br>
+      <div class="section">
+        <% if(recent && recent !== 'undefined' && recent !== null){ %>
+          <h4>Recently Watched</h4>
+          <%- recent %>
+            <% } %>
       </div>
 
-      <script>
-        var socket = io.connect();
-        $(function(){
+      <div class="divider"></div>
+      <br>
 
-          var $search = $('#search');
-          var $series_content = $('#series_content');
+      <div class="section">
+        <h4>Series</h4>
 
-          //On Search Input
-          $search.on('input', function() {
-            console.log($search.val()) // get the current value of the input field.
+        <div class="row">
+          <div class="input-field col s12">
+            <i class="material-icons right">search</i>
+            <input id="search" name="search" type="text" class="validate" required>
+            <label for="search">Search For Series</label>
+          </div>
+        </div>
 
-            socket.emit('search series', {
-              search: $search.val()
-            })
+        <div id="series_content" name="series_content">
+          <%- series %>
+        </div>
+      </div>
 
+      <div class="divider"></div>
+      <br> Series missing? Simply request it.
+      <br>
+      <br>
+    </div>
+
+    <% include partials/basic_functions.ejs %>
+    <script>
+      //var socket = io.connect();
+
+      $(function() {
+        var $search = $('#search');
+        var $series_content = $('#series_content');
+
+        //On Search Input
+        $search.on('input', function() {
+          console.log($search.val()) // get the current value of the input field.
+
+          socket.emit('search series', {
+            search: $search.val()
           });
 
-          //When search result comes back
-          socket.on('search result', function(data){
-            $series_content.html(data.series)
-            console.log('set result to ' + data.series)
-          })
-
-        })
-
-        // Send Air Play Command to server when icon is clicked
-        function airPlay(id){
-          console.log('air play called with id ' + id)
-          socket.emit('send air play', {
-            id: id,
-            room_name: '<%= username %>'
-          })
-        }
-
-        // Show Toast on Response
-        socket.on('toast response', function(data){
-          Materialize.toast(data.msg, 4000);
         });
 
-      </script>
+        //When search result comes back
+        socket.on('search result', function(data) {
+          $series_content.html(data.series)
+          console.log('set result to ' + data.series)
+        });
 
+      });
+
+      // Send Air Play Command to server when icon is clicked
+      function airPlay(id) {
+        console.log('air play called with id ' + id)
+        socket.emit('send air play', {
+          id: id,
+          room_name: '<%= username %>'
+        });
+      }
+
+      // Show Toast on Response
+      /*socket.on('toast response', function(data) {
+        Materialize.toast(data.msg, 4000);
+      });*/
+    </script>
   </body>
-
 </html>

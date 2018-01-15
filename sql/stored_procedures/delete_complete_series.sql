@@ -43,6 +43,31 @@ WHERE tbl_series.id = 6
 ;
 
 
+
+working query: (foreign key fails)
+
+DELETE tbl_series, tbl_season, tbl_season_episode, tbl_episode
+  FROM tbl_series
+  INNER JOIN tbl_season ON tbl_season.fk_series = tbl_series.id
+  INNER JOIN tbl_season_episode ON tbl_season_episode.fk_season = tbl_season.id
+  INNER JOIN tbl_episode ON tbl_episode.id = tbl_season_episode.fk_episode
+  WHERE tbl_series.id = 6
+  	AND tbl_season.id = tbl_season_episode.fk_season
+    AND tbl_episode.id = tbl_season_episode.fk_episode
+;
+
+
+working query: (foreign key fails)
+
+DELETE tbl_season_episode, tbl_season, tbl_series, tbl_episode
+FROM tbl_season_episode, tbl_season, tbl_series, tbl_episode
+WHERE tbl_series.id = 6
+  AND tbl_season.id = tbl_season_episode.fk_season
+  AND tbl_episode.id = tbl_season_episode.fk_episode
+;
+
+
+
 INSERT INTO tbl_episode (name, thumbnail, src, description, released, year, country, language)
   SELECT d_name, d_thumbnail, d_src, d_description, d_released, d_year, d_country, d_language FROM DUAL
     WHERE NOT EXISTS
