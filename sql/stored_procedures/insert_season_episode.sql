@@ -22,7 +22,7 @@ BEGIN
 **/
 
 INSERT INTO tbl_season_episode (fk_episode, fk_season, number)
-  SELECT d_fk_episode, (SELECT sea.id FROM tbl_season sea INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE sea.order_number = d_number_season AND ser.name = d_name_series), d_number_episode
+  SELECT d_fk_episode, (SELECT sea.id FROM tbl_season sea INNER JOIN tbl_series ser ON sea.fk_series = ser.id WHERE sea.order_number = d_number_season AND ser.name = d_name_series), d_number_episode FROM DUAL
     WHERE NOT EXISTS
       (SELECT fk_episode FROM tbl_season_episode
         WHERE fk_episode = d_fk_episode

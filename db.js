@@ -6,6 +6,11 @@ var con = mysql.createConnection({
   password: ''
 });
 
+con.connect(function(err) {
+  if (err) throw err;
+  console.log('Connected!');
+});
+
 function executeQuery(sql, callback){
   var result = con.query(sql, function (err, res) {
       if (err){
@@ -21,11 +26,6 @@ function executeQuery(sql, callback){
       callback(res); //Call Given function with result
   });
 }
-
-con.connect(function(err) {
-  if (err) throw err;
-  console.log('Connected!');
-});
 
 con.query('USE stream_dream5;', function (err, result) {
     if (err) throw err;

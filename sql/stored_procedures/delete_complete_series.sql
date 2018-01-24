@@ -4,8 +4,8 @@ DELIMITER $$
 --
 -- Prozeduren
 --
-CREATE DEFINER=root@localhost PROCEDURE delete_complete_series (
-    IN d_series_name VARCHAR(255)
+CREATE PROCEDURE delete_complete_series (
+  IN d_series_name VARCHAR(255)
 )
 BEGIN
 
@@ -15,8 +15,97 @@ BEGIN
   Version:	1.0
 
   Description: Insert New Season Into Database if it doesnt exist yet
-  Call: call delete_complete_series('Name', 'http://link.com/bild', 'http://link.com/video', 'Beschreibung', '30.12.2017', 2017, 'CH', 'Deutsch')
+  Call: call delete_complete_series('')
 **/
+
+DECLARE v_finished INTEGER DEFAULT 0;
+DECLARE v_series_id INTEGER DEFAULT 0;
+DECLARE v_season_id INTEGER DEFAULT 0;
+DECLARE v_list varchar(100) DEFAULT "";
+
+SET v_series_id = (SELECT id FROM tbl_series WHERE name = d_series_name);
+
+-- declare cursor for employee email
+DEClARE season_cursor CURSOR FOR
+SELECT id FROM tbl_season WHERE fk_series = v_series_id;
+
+-- declare NOT FOUND handler
+DECLARE CONTINUE HANDLER
+FOR NOT FOUND SET v_finished = 1;
+
+OPEN season_cursor;
+
+delete_season: LOOP
+
+FETCH season_cursor INTO v_season_id;
+
+IF v_finished = 1 THEN
+LEAVE delete_season;
+END IF;
+
+-- build email list
+SET v_list = CONCAT(v_list,";",v_season_id);
+
+END LOOP delete_season;
+
+CLOSE email_cursor;
+
+SELECT v_list;
+
+END$$
+
+DELIMITER ;
+
+
+working query: (foreign key fails)
+
+DELETE tbl_season_episode, tbl_season, tbl_series, tbl_episode
+FROM tbl_season_episode, tbl_season, tbl_series, tbl_episode
+WHERE tbl_series.id = 6
+  AND tbl_season.id = tbl_season_episode.fk_season
+  AND tbl_episode.id = tbl_season_episode.fk_episode
+;
+
+
+
+
+
+
+
+
+
+working query: (foreign key fails)
+
+DELETE tbl_series, tbl_season, tbl_season_episode, tbl_episode
+  FROM tbl_series
+  INNER JOIN tbl_season ON tbl_season.fk_series = tbl_series.id
+  INNER JOIN tbl_season_episode ON tbl_season_episode.fk_season = tbl_season.id
+  INNER JOIN tbl_episode ON tbl_episode.id = tbl_season_episode.fk_episode
+  WHERE tbl_series.id = 6
+  	AND tbl_season.id = tbl_season_episode.fk_season
+    AND tbl_episode.id = tbl_season_episode.fk_episode
+;
+
+
+working query: (foreign key fails)
+
+DELETE tbl_season_episode, tbl_season, tbl_series, tbl_episode
+FROM tbl_season_episode, tbl_season, tbl_series, tbl_episode
+WHERE tbl_series.id = 6
+  AND tbl_season.id = tbl_season_episode.fk_season
+  AND tbl_episode.id = tbl_season_episode.fk_episode
+;
+
+
+
+
+
+
+
+
+
+
+
 
 SET @series_id = (SELECT id FROM tbl_series WHERE name = d_series_name);
 SET @seas
@@ -44,28 +133,7 @@ WHERE tbl_series.id = 6
 
 
 
-working query: (foreign key fails)
-
-DELETE tbl_series, tbl_season, tbl_season_episode, tbl_episode
-  FROM tbl_series
-  INNER JOIN tbl_season ON tbl_season.fk_series = tbl_series.id
-  INNER JOIN tbl_season_episode ON tbl_season_episode.fk_season = tbl_season.id
-  INNER JOIN tbl_episode ON tbl_episode.id = tbl_season_episode.fk_episode
-  WHERE tbl_series.id = 6
-  	AND tbl_season.id = tbl_season_episode.fk_season
-    AND tbl_episode.id = tbl_season_episode.fk_episode
-;
-
-
-working query: (foreign key fails)
-
-DELETE tbl_season_episode, tbl_season, tbl_series, tbl_episode
-FROM tbl_season_episode, tbl_season, tbl_series, tbl_episode
-WHERE tbl_series.id = 6
-  AND tbl_season.id = tbl_season_episode.fk_season
-  AND tbl_episode.id = tbl_season_episode.fk_episode
-;
-
+select * from tbl_episode where name = "The Devil's Mark"
 
 
 INSERT INTO tbl_episode (name, thumbnail, src, description, released, year, country, language)
