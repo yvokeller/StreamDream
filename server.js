@@ -453,6 +453,7 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
                 async.each(val_episodes, function(row_episodes, callback1) {
                   //change Plot
                   var plot = row_episodes.description.replace("'", "")
+                  plot = plot.replace("'", "")
 
                   //process row_episodes
                   episode_content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'

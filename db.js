@@ -1,9 +1,12 @@
 var mysql = require('mysql');
 
+// load environment variables
+require('dotenv').config()
+
 var con = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: ''
+  password: process.env.DB_PASSWORD
 });
 
 con.connect(function(err) {
