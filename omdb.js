@@ -116,8 +116,8 @@ exports.getSeries = function(imdb_id, callback) {
 
                   // Insert Episode Into Database
                   var poster = row_episode_data.Poster.replace(/sx[0-9]*/i, "SX500"); // change resolution of poster
-                  var plot = replace(row_episode_data.Plot.replace('"', ''), "'", "")
-                  var sql_query2 = 'CALL insert_episode("' + row_episode_data.Title + '", "' + poster + '", "' + 'http://link.com/video' + '", "' + row_episode_data.Plot + '", "' + row_episode_data.Released + '", ' + row_episode_data.Year + ', "' + row_episode_data.Country + '","' + row_episode_data.Language + '")'
+                  var plot = db.escape(row_episode_data.Plot)
+                  var sql_query2 = 'CALL insert_episode("' + row_episode_data.Title + '", "' + poster + '", "' + 'http://link.com/video' + '", "' + plot + '", "' + row_episode_data.Released + '", ' + row_episode_data.Year + ', "' + row_episode_data.Country + '","' + row_episode_data.Language + '")'
                   db.executeQuery(sql_query2, function(val) {
                     val = val[0]
 

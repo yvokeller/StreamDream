@@ -451,6 +451,9 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
                 episode_content += '<div id="' + row_season.id + '" class="col s12">'
 
                 async.each(val_episodes, function(row_episodes, callback1) {
+                  //change Plot
+                  var plot = row_episodes.description.replace("'", "")
+
                   //process row_episodes
                   episode_content += '<div class="col s12 m6 l6 xl3"> <div class="card"> <div class="card-image">'
                   episode_content += '<img src="' + row_episodes.thumbnail + '">'
@@ -464,7 +467,7 @@ app.get('/library/:series_name', isLoggedIn, function(req, res) {
                   episode_content += '<i class="material-icons">airplay</i></a>'
 
                   episode_content += '</div> <div class="card-content">'
-                  episode_content += '<p>' + row_episodes.description + '</p>'
+                  episode_content += '<p>' + plot + '</p>'
                   episode_content += '</div> </div> </div>'
 
                   console.log('inner loop created card')
