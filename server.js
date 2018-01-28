@@ -35,7 +35,7 @@ var urlencodedParser = bodyParser.urlencoded({
 app.use(session({
   secret: 'keyboard cat',
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 2 * 60 * 60 * 1000 // expires after 2 hours
   }
 }));
 

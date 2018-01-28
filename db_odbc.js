@@ -1,5 +1,6 @@
 // DSN NAME is dependent on file /usr/local/Cellar/unixodbc/2.3.4/etc/odbc.ini
 // GETS DATA FROM ODBC MANAGER File (idk where that is)
+
 var db = require('odbc')();
 var con = 'DSN=stream_dream';
 
