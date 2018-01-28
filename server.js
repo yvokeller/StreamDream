@@ -540,13 +540,16 @@ app.get('/stream', isLoggedIn, function(req, res) {
       val = val[0] // set val according to stored procedure response
       if (val !== 'undefined' && val !== null) {
         var poster_resize = val[0].thumbnail.replace('SX', 'SX10')
+        var plot = val[0].description.replace("'", "")
+        plot = plot.replace("'", "")
+
 
         var src_info = {
           src: 'play?id=' + val[0].id,
           poster: poster_resize,
           episode_name: val[0].name,
           episode_index: val[0].name_series + ' S' + val[0].order_number + 'E' + val[0].number,
-          episode_desc: val[0].description
+          episode_desc: plot
         };
 
         res.render('stream', {
