@@ -2,7 +2,7 @@ Guten Tag Herr von Orelli
 
 Nachfolgend noch einige wichtige Randinformationen zur Abgabge meines Modulprojektes "StreamDram" und wie sie das ganze Testen können.
 
-### Applikationsumgebung zum Testen
+# Applikationsumgebung zum Testen
 Wie besprochen habe ich meine Applikation auf einem Webserver installiert. Das ganze läuft auf einem Linux vServer.
 
 Unter der folgenden Domain können sie StreamDream erreichen: http://itsfrdm.art
@@ -11,14 +11,14 @@ Sollte etwas nicht funktionieren oder die Verbindung abbrechen, können sie auch
 
 Wenn es dennoch Probleme geben sollte, melden sie sich bitte bei mir.
 
-#### Anmeldung
+#### Anmeldung
 Ich habe die Registrationsfunktion deaktiviert, da eigentlich niemand asser ich auf die Seite zugreifen darf. (Rechtliche Aspekte etc., Sie können sich zwar zum Test registrieren, nachher mit dem erstellten Konto aber nicht anmelden.)
 
 Bitte melden sie sich mit folgendem Account an:
 __Username__: Test
 __Passwort__: 1234
 
-#### Streaming
+#### Streaming
 Es stehen nur bestimmte Serien aus meiner Privatmediathek zum Streamen zur Verfügung (Wenn die Serie angezeigt wird bedeutet das nicht dass die einzelnen Episoden auch abgespielt werden können, dazu sind zusätzliche Schritte erforderlich).
 
 Folgende Episoden können sie sich zum Testen der Funktionen ansehen:
