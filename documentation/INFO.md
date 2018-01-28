@@ -41,5 +41,4 @@ Sie können das Admintool auf der Seite Admin gerne ausführlich Testen und auch
 
 Ich hoffe damit ist alles klar. Wenn es noch Unklarheiten gibt, melden sie sich einfach.
 
-Freundliche Grüsse
 Yvo Keller
