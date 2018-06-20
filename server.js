@@ -194,8 +194,7 @@ app.post('/register', urlencodedParser, function(req, res) {
       password_repeat: ''
     });
 
-    /* Enabled Registration: */ 
-    /*
+    /* Enabled Registration: */
     db.executeQuery(sql_query, function(val) {
       var data_row = val[0][0] // erste Zeile der data row
       var data_row = val[0] // odbc version..
@@ -228,7 +227,6 @@ app.post('/register', urlencodedParser, function(req, res) {
         password_repeat: ''
       });
     });
-    */
 
   } else {
     var feedback = '<div class="card-panel red lighten-4 center">' + msg + '</div>';
