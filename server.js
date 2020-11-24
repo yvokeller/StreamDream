@@ -773,7 +773,7 @@ sio.sockets.on("connection", function(socket) {
 */
 
 
-server.listen(process.env.PORT ||  8888);
+server.listen(process.env.PORT || 8888);
 console.log('Server started. Listening on Port 8888')
 
 //Web Sockets

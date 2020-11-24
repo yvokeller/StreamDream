@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "async": "^2.6.0",
-    "bcrypt": "^3.0.2",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
     "dotenv": "^4.0.0",
@@ -19,6 +19,7 @@
     "express": "*",
     "express-session": "^1.15.3",
     "mysql": "^2.13.0",
+    "node-gyp": "^7.1.2",
     "socket.io": "^2.0.4",
     "xmlhttprequest": "^1.8.0"
   },
