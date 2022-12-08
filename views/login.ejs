@@ -1,26 +1,70 @@
 <html>
-  <% include partials/head.ejs %>
+<% include partials/head.ejs %>
+
   <body>
-    <div class="container signin-container">
 
-      <img src="assets/img/cinema_ticket.png" width="250px">
-
-      <form class="form-signin" method="POST">
-        <h2 class="form-signin-heading">Please sign in</h2>
-        <%- errors %>
-        <br>
-        <br>
-        <label for="username" class="sr-only">Username</label>
-        <input type="text" id="username" name = "username" class="form-control btn-margin" placeholder="Username" required autofocus>
-        <label for="password" class="sr-only">Password</label>
-        <input type="password" id="password" name="password" class="form-control btn-margin" placeholder="Password" required>
-        <br>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-
-        <button type="button" id="register" onclick="window.location='/register';" class="btn btn-sm btn-default btn-block">Register</button>
-
-      </form>
-
+    <div class="parallax-container valign-wrapper">
+      <div class="section no-pad-bot">
+        <div class="container">
+          <div class="row center">
+            <h5 class="header col s12 light">StreamDream</h5>
+          </div>
+        </div>
+      </div>
+      <div class="parallax"><img src="assets/img/background.jpg" alt="Matterhorn"></div>
     </div>
+
+    <div class="container valign-wrapper">
+      <div class="section">
+        <form id="login" method="POST">
+
+          <div class="row center">
+            <div class="col s12">
+              <h3><i class="mdi-content-send brown-text"></i></h3>
+              <h4>StreamDream</h4>
+
+              <br>
+
+              <div class="card-panel indigo lighten-5">
+                Sign In to start streaming.
+              </div>
+
+              <br>
+
+              <%- errors %>
+
+              <br>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <input id="username" name="username" type="text" class="validate" required autofocus>
+              <label for="username">Username</label>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <input id="password" name="password" type="password" class="validate" required>
+              <label for="password">Password</label>
+            </div>
+
+          </div>
+
+          <button type="submit" class="btn waves-effect waves-light indigo lighten-2 right">Sign In
+            <i class="material-icons right">input</i>
+          </button>
+
+          <button class="btn waves-effect waves-light grey lighten-1 left" onclick="window.location='/register';">Register
+            <i class="material-icons right">edit</i>
+          </button>
+
+          <br>
+          <br>
+
+        </form>
+      </div>
+    </div>
+
+    <% include partials/scripts.ejs %>
+
   </body>
+
 </html>

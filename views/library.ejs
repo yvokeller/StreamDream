@@ -1,20 +1,83 @@
 <html>
 <% include partials/head.ejs %>
-<body>
+
+  <body>
     <% include partials/navigation.ejs %>
+
     <div class='container'>
       <h1>Library.</h1>
 
-      <% if(recent && recent !== 'undefined' && recent !== null){ %>
-      <h2>Recently Watched</h2>
-      <%- recent %>
-      <% } %>
+      <div class="section">
+        <% if(recent && recent !== 'undefined' && recent !== null){ %>
+          <h4>Recently Watched</h4>
+          <%- recent %>
+            <% } %>
+      </div>
 
+      <div class="divider"></div>
       <br>
-      <%- series %>
+
+      <div class="section">
+        <h4>Series</h4>
+
+        <div class="row">
+          <div class="input-field col s12">
+            <i class="material-icons right">search</i>
+            <input id="search" name="search" type="text" class="validate" required>
+            <label for="search">Search For Series</label>
+          </div>
+        </div>
+
+        <div id="series_content" name="series_content">
+          <%- series %>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <br> Series missing? Simply request it.
+      <br>
       <br>
     </div>
+
+    <% include partials/basic_functions.ejs %>
     <script>
+      //var socket = io.connect();
+
+      $(function() {
+        var $search = $('#search');
+        var $series_content = $('#series_content');
+
+        //On Search Input
+        $search.on('input', function() {
+          console.log($search.val()) // get the current value of the input field.
+
+          socket.emit('search series', {
+            search: $search.val()
+          });
+
+        });
+
+        //When search result comes back
+        socket.on('search result', function(data) {
+          $series_content.html(data.series)
+          console.log('set result to ' + data.series)
+        });
+
+      });
+
+      // Send Air Play Command to server when icon is clicked
+      function airPlay(id) {
+        console.log('air play called with id ' + id)
+        socket.emit('send air play', {
+          id: id,
+          room_name: '<%= username %>'
+        });
+      }
+
+      // Show Toast on Response
+      /*socket.on('toast response', function(data) {
+        Materialize.toast(data.msg, 4000);
+      });*/
     </script>
   </body>
 </html>

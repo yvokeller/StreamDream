@@ -1,0 +1,38 @@
+<html>
+<% include partials/head.ejs %>
+
+  <body>
+    <% include partials/navigation.ejs %>
+    <div class='container'>
+      <h1>Library.</h1>
+
+      <div class="section">
+        <h4><%- data.series_name %></h4>
+        <%- data.seasons %>
+      </div>
+
+      <div class="divider"></div>
+      <br>
+      Episode or season missing? Simply request it.
+      <br>
+      <br>
+
+      <% include partials/basic_functions.ejs %>
+
+      <script>
+        $(document).ready(function(){
+          $('ul.tabs').tabs();
+        });
+
+        // Send Air Play Command to server when icon is clicked
+        function airPlay(id){
+          console.log('air play called with id ' + id)
+          socket.emit('send air play', {
+            id: id,
+            room_name: '<%= data.username %>'
+          })
+        }
+      </script>
+    </div>
+  </body>
+</html>

@@ -2,32 +2,47 @@
 <% include partials/head.ejs %>
 <body>
     <% include partials/navigation.ejs %>
+
     <div class='container'>
-      <h1>Remote</h1>
+      <h1>Remote.</h1>
 
-      <button id="btnPlay" class="btn btn-lg btn-default" type="button">
-        <img src="assets/img/play.png" width="50px" class="img-responsive" />
+      <button id="btnPlay" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">play_arrow</i>
       </button>
 
-      <button id="btnPause" class="btn btn-lg btn-default" type="button">
-        <img src="assets/img/pause.png" width="50px" class="img-responsive" />
+      <button id="btnPause" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">pause</i>
       </button>
 
       <br>
       <br>
 
-      <button id="btn10Backward" class="btn btn-lg btn-default" type="button">
-        <img src="assets/img/backward.png" width="50px" class="img-responsive" />
+      <button id="btn10Backward" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">replay_10</i>
       </button>
 
-      <button id="btn10Forward" class="btn btn-lg btn-default" type="button">
-         <img src="assets/img/forward.png" width="50px" class="img-responsive" />
+      <button id="btn10Forward" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">forward_10</i>
       </button>
 
-      <h3>Connected Devices</h3>
+      <br>
+      <br>
+
+      <button id="btnMute" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">volume_off</i>
+      </button>
+
+      <button id="btnUnmute" class="btn-floating btn-large waves-effect waves-light red">
+        <i class="material-icons">volume_down</i>
+      </button>
+
+      <h4>Connected Devices</h4>
       <%- conn %>
 
     </div>
+
+    <% include partials/scripts.ejs %>
+
     <script>
       console.log('IN');
 
@@ -42,6 +57,8 @@
         var $play = $('#btnPlay');
         var $10forward = $('#btn10Forward');
         var $10backward = $('#btn10Backward');
+        var $mute = $('#btnMute');
+        var $unmute = $('#btnUnmute');
 
         //Play
         $play.click(function(e){
@@ -67,6 +84,17 @@
           socket.emit('backward 10', 0);
         });
 
+        //Mute
+        $mute.click(function(e){
+          console.log('Remote Mute!');
+          socket.emit('mute', 0);
+        });
+
+        //Unmute
+        $unmute.click(function(e){
+          console.log('Remote Unmute!');
+          socket.emit('unmute', 0);
+        });
       });
     </script>
   </body>

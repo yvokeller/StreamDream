@@ -1,16 +1,27 @@
 var mysql = require('mysql');
 
+// load environment variables
+require('dotenv').config({path: './env.list'})
+
 var con = mysql.createConnection({
-  host: 'localhost',
+  host: process.env.DATABASE_HOST,
+  port: '3306',
   user: 'root',
-  password: ''
+  password: process.env.DB_PASSWORD
 });
 
-function executeRead(sql, callback){
+con.connect(function(err) {
+  if (err) throw err;
+  console.log('Connected!');
+});
+
+function executeQuery(sql, callback){
   var result = con.query(sql, function (err, res) {
       if (err){
         if (err.code === 'ER_DUP_ENTRY') {
           console.log('Entry already exists! UNIQUE_KEY');
+        /*} else if(err.code === 'ER_NO_REFERENCED_ROW_2') {
+          console.log('Insert Error occured')*/
         } else {
           throw err;
         }
@@ -20,17 +31,13 @@ function executeRead(sql, callback){
   });
 }
 
-con.connect(function(err) {
-  if (err) throw err;
-  console.log('Connected!');
-});
-
-con.query('USE stream_dream;', function (err, result) {
+con.query('USE stream_dream5;', function (err, result) {
     if (err) throw err;
     console.log('Using database');
 });
 
 module.exports = {
   con: con,
-  executeRead: executeRead
+  executeQuery: executeQuery,
+  escape: mysql.escape
 };

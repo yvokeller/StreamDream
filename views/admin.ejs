@@ -1,0 +1,143 @@
+<html>
+<% include partials/head.ejs %>
+
+  <body>
+    <% include partials/navigation.ejs %>
+      <div class='container'>
+        <h1>Admin.</h1>
+
+        <div class="section">
+          <h4>Add Series To Library</h4>
+
+          <div class="card-panel light-blue lighten-5">
+            <b>How To</b>
+            <br>
+            Add a new series to the library by searching. Data source is the Open Movie Database. If found, load your series into the library
+            by clicking the arrow down button in the result list.
+          </div>
+
+          <br>
+
+          <div class="input-field col s12 m12">
+            <input id="search_name" name="search_name" type="text" class="validate" required autofocus>
+            <label for="search_name">Search Series</label>
+          </div>
+
+          <button id="btnSearch" class="btn waves-effect waves-light light-blue lighten-2">Search for Series
+            <i class="material-icons right">search</i>
+          </button>
+
+          <br>
+          <br>
+          <br>
+
+          <div id="loading">
+            <div class="preloader-wrapper center big active">
+              <div class="spinner-layer spinner-blue">
+                <div class="circle-clipper left">
+                  <div class="circle"></div>
+                </div>
+                <div class="gap-patch">
+                  <div class="circle"></div>
+                </div>
+                <div class="circle-clipper right">
+                  <div class="circle"></div>
+                </div>
+              </div>
+
+              <div class="spinner-layer spinner-red">
+                <div class="circle-clipper left">
+                  <div class="circle"></div>
+                </div>
+                <div class="gap-patch">
+                  <div class="circle"></div>
+                </div>
+                <div class="circle-clipper right">
+                  <div class="circle"></div>
+                </div>
+              </div>
+
+              <div class="spinner-layer spinner-yellow">
+                <div class="circle-clipper left">
+                  <div class="circle"></div>
+                </div>
+                <div class="gap-patch">
+                  <div class="circle"></div>
+                </div>
+                <div class="circle-clipper right">
+                  <div class="circle"></div>
+                </div>
+              </div>
+
+              <div class="spinner-layer spinner-green">
+                <div class="circle-clipper left">
+                  <div class="circle"></div>
+                </div>
+                <div class="gap-patch">
+                  <div class="circle"></div>
+                </div>
+                <div class="circle-clipper right">
+                  <div class="circle"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="response">
+            <%- response %>
+          </div>
+
+          <br>
+
+        </div>
+
+      </div>
+
+      <script>
+        $(function() {
+          var socket = io.connect();
+
+          var $btnSearch = $('#btnSearch');
+          var $search_name = $('#search_name');
+
+          var $btnLoad = $('#btnLoad');
+          var $series_name = $('#series_name');
+
+          var $response = $('#response');
+          var $loading = $('#loading');
+
+          $btnLoad.click(function(e) {
+            console.log('Load Series Button Clicked!');
+            socket.emit('load series', $series_name.val());
+          });
+
+          $btnSearch.click(function(e) {
+            console.log('Search Series Button Clicked!');
+            socket.emit('find series', $search_name.val());
+          });
+
+          socket.on('get series response', function(response) {
+            $response.html(response);
+          });
+
+          socket.on('find series response', function(response) {
+            $response.html(response);
+          });
+
+          // Manage loader
+          $loading.hide()
+
+          socket.on('show loader', function() {
+            $loading.show()
+          });
+
+          socket.on('hide loader', function() {
+            $loading.hide()
+          });
+
+        });
+      </script>
+
+  </body>
+
+</html>

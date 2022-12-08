@@ -3,19 +3,22 @@
 <body>
     <% include partials/navigation.ejs %>
     <div class='container'>
+      <h1>Stream.</h1>
 
-      <h1><%= rq[0].name %> - <%= rq[0].number %></h1>
-      <h4><%= rq[0].series %> - <%= rq[0].name_season %></h4>
+      <div class="section">
+        <h4><%- src_info.episode_name %></h4>
+        <h5><%- src_info.episode_index %></h5>
 
-      <div align='center' class='embed-responsive embed-responsive-16by9'>
-        <video id='myVideo' class='embed-responsive-item' poster=<%= src_info.poster %> controls>
+        <video id='myVideo' onkeydown="keyPress(event)" width=100% class='responsive-video' poster=<%= src_info.poster %> controls>
             <source src=<%= src_info.src %> type='video/mp4'>
         </video>
+
+        <br>
+        <p><%- src_info.episode_desc %></p>
       </div>
-      <br>
-      <p><%= rq[0].description %></p>
 
     </div>
+
     <script>
         var vid = document.getElementById('myVideo');
 
@@ -35,7 +38,7 @@
               var stream_info = {
                 curr_time: vid.currentTime,
                 episode: stream_id,
-                user: <%= session.userid %>
+                username: '<%= session.username %>'
               };
               socket.emit('send watchtime', stream_info);
               console.log('Sent.');
@@ -45,7 +48,11 @@
           }, 5000);
 
           //Join the Account Room when loading site
-          socket.emit('join room', {username: '<%= session.username %>'});
+          socket.emit('join room', {
+            username: '<%= session.username %>',
+            vendor: navigator.vendor,
+            episode_name: '<%= src_info.episode_name %>'
+          });
 
           socket.on('joined room', function(data){
             console.log('Users in Room: ' + data.members);
@@ -73,12 +80,26 @@
             console.log('Skipped 10 Backward.');
           });
 
+          //Mute
+          socket.on('activate mute', function(data){
+            vid.muted = true;
+            console.log('Muted.');
+          });
+          socket.on('activate unmute', function(data){
+            vid.muted = false;
+            console.log('Unmuted.');
+          });
+
+          //Switch Stream
+          socket.on('air play', function(data){
+            window.location.replace(data.redirect)
+          });
+
           //Sync watchtime
           socket.on('set watchtime', function(data){
             vid.currentTime = data.watch_time;
             console.log('Synced watch_time to ' + data.watch_time);
           });
-
 
           $('video').on('play', function (e) {
             //When play button gets clicked sync time
@@ -86,7 +107,7 @@
               socket.emit('get watchtime', {
                 curr_time: vid.currentTime,
                 episode: stream_id,
-                user: <%= session.userid %>
+                username: '<%= session.username %>'
               });
             }
           });
@@ -99,6 +120,13 @@
 
         function playVideo(){
           vid.play();
+        }
+
+        function keyPress(event) {
+          var x = event.keyCode;
+          if (x == 32) {  // 27 is the SPAcE key
+            pauseVideo();
+          }
         }
 
         //Query Parameter Function
